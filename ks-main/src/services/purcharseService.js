@@ -4,14 +4,14 @@ import { getUpdatedUser } from './userService';
 
 // Configuración base de Axios
 const api = axios.create({
-    baseURL: 'http://localhost:3000/api',
+    baseURL: `${import.meta.env.VITE_API_URL}/api`,
     headers: {
         'Content-Type': 'application/json',
     },
 });
 
 // URL base para recibos
-const API_BASE_RECEIPT = 'http://localhost:3000/receipts/';
+const API_BASE_RECEIPT = `${import.meta.env.VITE_API_URL}/receipts/`;
 
 // Obtener ID del usuario autenticado
 const getUserId = () => {
@@ -42,6 +42,8 @@ const transformPurchaseData = (purchase) => {
         transformed.items = transformed.items.map(item => ({
             ...item,
             isSkin: item.isSkin ?? false,
+            // Asegurarnos de que accountData está disponible si existe
+            accountData: item.accountData || null
         }));
     }
 
@@ -53,7 +55,7 @@ export const createPurchase = async (data) => {
     const userId = getUserId();
     const {items, paymentMethodId, riotName,discordName ,region, selectedCurrency, cupon, file} = data
 
-    console.log(riotName)
+    // console.log(riotName)
 
     if (!userId) {
         throw new Error('Usuario no autenticado.');
@@ -320,7 +322,20 @@ export const checkPurchaseTimer = (purchase) => {
 };
 
 
-
+export const chargeAccountData = async (purchaseId, itemId, accountData) => {
+    try {
+        const response = await api.patch(
+            `/purchases/${purchaseId}/items/${itemId}/account`,
+            {
+                email: accountData.email,
+                password: accountData.password
+            }
+        );
+        return transformPurchaseData(response.data.purchase);
+    } catch (error) {
+        handleRequestError(error);
+    }
+};
 
 
 export default {
@@ -340,5 +355,6 @@ export default {
     getUnreadCount,
     getPurchasesNeedingConfirmation,
     confirmPurchaseStatus,
-    checkPurchaseTimer
+    checkPurchaseTimer,
+    chargeAccountData
 };

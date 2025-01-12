@@ -1,109 +1,66 @@
 import { Button } from "@/components/ui/button";
-import { ShoppingCart, CreditCard, Download } from "lucide-react";
+import { Trophy, Star, ArrowRight, Award } from "lucide-react";
 
 export const StepsSection = () => {
   return (
-    <section className="py-24 relative overflow-hidden bg-black">
-      {/* Background with noise texture */}
-      <div className="absolute inset-0">
-        <div className="absolute inset-0 bg-noise opacity-5"></div>
-      </div>
-      
+    <section className="py-8 mt-4 relative overflow-hidden bg-black">
       <div className="max-w-7xl mx-auto px-4 relative">
-        <div className="text-center mb-16 animate-fade-in">
-          <h2 className="text-sm uppercase tracking-wider text-white/80 mb-2">
-            PASOS PARA COMPRAR
-          </h2>
-          <h3 className="text-4xl font-bold bg-gradient-to-r from-white via-white/80 to-white/60 text-transparent bg-clip-text">
-            ¡Comienza tu aventura!
-          </h3>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {/* Select Item Card */}
-          <div className="group relative">
-            <div className="absolute inset-0 bg-white/5 rounded-2xl blur group-hover:blur-xl transition-all duration-500" />
-            <div className="relative p-8 rounded-2xl border border-white/10 backdrop-blur-sm hover:border-white/20 transition-all duration-300 bg-black/40">
-              <div className="mb-8">
-                <div className="w-20 h-20 bg-white/10 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                  <ShoppingCart className="w-10 h-10 text-white" />
+        <div className="flex flex-col md:flex-row items-center justify-center gap-8 relative">
+          {/* Step 1 */}
+          <div className="relative group w-full md:w-1/3 max-w-sm">
+            <div className="relative p-8 bg-black rounded-2xl leading-none flex items-center justify-start space-x-6 border border-white/20">
+              <div className="flex flex-col space-y-6 w-full">
+                <div className="flex items-center justify-between">
+                  <span className="flex items-center justify-center w-12 h-12 rounded-full bg-white/20 text-white text-2xl font-bold">1</span>
+                  <Trophy className="w-10 h-10 text-white" />
+                </div>
+                <div>
+                  <h4 className="text-xl font-bold text-white mb-2">Compra y Gana XP</h4>
+                  <p className="text-white/60">Cada compra que realices te otorga puntos de experiencia (XP). ¡Mientras más compres, más rápido subirás de nivel!</p>
                 </div>
               </div>
-              <h4 className="text-2xl font-bold mb-4 text-white">
-                1. Selecciona un Item
-              </h4>
-              <p className="text-white/60 mb-6 leading-relaxed">
-                Explora nuestro catálogo y elige el item que más te guste. Tenemos una gran variedad de opciones para ti.
-              </p>
-              <Button variant="ghost" className="text-white/80 hover:text-white group-hover:translate-x-2 transition-all">
-                Ver Catálogo
-                <svg 
-                  className="w-4 h-4 ml-2" 
-                  fill="none" 
-                  stroke="currentColor" 
-                  viewBox="0 0 24 24"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                </svg>
-              </Button>
             </div>
           </div>
 
-          {/* Payment Card */}
-          <div className="group relative">
-            <div className="absolute inset-0 bg-white/5 rounded-2xl blur group-hover:blur-xl transition-all duration-500" />
-            <div className="relative p-8 rounded-2xl border border-white/10 backdrop-blur-sm hover:border-white/20 transition-all duration-300 bg-black/40">
-              <div className="mb-8">
-                <div className="w-20 h-20 bg-white/10 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                  <CreditCard className="w-10 h-10 text-white" />
+          {/* Arrow 1 */}
+          <div className="hidden md:flex flex-col items-center justify-center text-white">
+            <ArrowRight className="w-12 h-12 animate-pulse" />
+          </div>
+
+          {/* Step 2 */}
+          <div className="relative group w-full md:w-1/3 max-w-sm">
+            <div className="relative p-8 bg-black rounded-2xl leading-none flex items-center justify-start space-x-6 border border-white/20">
+              <div className="flex flex-col space-y-6 w-full">
+                <div className="flex items-center justify-between">
+                  <span className="flex items-center justify-center w-12 h-12 rounded-full bg-white/20 text-white text-2xl font-bold">2</span>
+                  <Star className="w-10 h-10 text-white" />
+                </div>
+                <div>
+                  <h4 className="text-xl font-bold text-white mb-2">Sube de Rango</h4>
+                  <p className="text-white/60">Al alcanzar ciertos niveles de XP, subirás de rango y recibirás Oro como recompensa por tu progreso.</p>
                 </div>
               </div>
-              <h4 className="text-2xl font-bold mb-4 text-white">
-                2. Hacer el Pago
-              </h4>
-              <p className="text-white/60 mb-6 leading-relaxed">
-                Proceso de pago seguro y rápido. Aceptamos múltiples métodos de pago para tu comodidad.
-              </p>
-              <Button variant="ghost" className="text-white/80 hover:text-white group-hover:translate-x-2 transition-all">
-                Métodos de Pago
-                <svg 
-                  className="w-4 h-4 ml-2" 
-                  fill="none" 
-                  stroke="currentColor" 
-                  viewBox="0 0 24 24"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                </svg>
-              </Button>
             </div>
           </div>
 
-          {/* Receive Item Card */}
-          <div className="group relative">
-            <div className="absolute inset-0 bg-white/5 rounded-2xl blur group-hover:blur-xl transition-all duration-500" />
-            <div className="relative p-8 rounded-2xl border border-white/10 backdrop-blur-sm hover:border-white/20 transition-all duration-300 bg-black/40">
-              <div className="mb-8">
-                <div className="w-20 h-20 bg-white/10 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                  <Download className="w-10 h-10 text-white" />
+          {/* Arrow 2 */}
+          <div className="hidden md:flex flex-col items-center justify-center text-white">
+            <ArrowRight className="w-12 h-12 animate-pulse" />
+          </div>
+
+          {/* Step 3 */}
+          <div className="relative group w-full md:w-1/3 max-w-sm">
+            <div className="relative p-8 bg-black rounded-2xl leading-none flex items-center justify-start space-x-6 border border-white/20">
+              <div className="flex flex-col space-y-6 w-full">
+                <div className="flex items-center justify-between">
+                  <span className="flex items-center justify-center w-12 h-12 rounded-full bg-white/20 text-white text-2xl font-bold">3</span>
+                  <Award className="w-10 h-10 text-white" />
+                </div>
+                <div>
+                  <h4 className="text-xl font-bold text-white mb-2">Canjea tu Oro</h4>
+                  <p className="text-white/60">Utiliza el Oro acumulado para obtener recompensas exclusivas. Cada recompensa tiene su valor específico en Oro.</p>
                 </div>
               </div>
-              <h4 className="text-2xl font-bold mb-4 text-white">
-                3. Recibe tu Item
-              </h4>
-              <p className="text-white/60 mb-6 leading-relaxed">
-                Tu item será entregado instantáneamente en tu cuenta después de la confirmación del pago.
-              </p>
-              <Button variant="ghost" className="text-white/80 hover:text-white group-hover:translate-x-2 transition-all">
-                Más Información
-                <svg 
-                  className="w-4 h-4 ml-2" 
-                  fill="none" 
-                  stroke="currentColor" 
-                  viewBox="0 0 24 24"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                </svg>
-              </Button>
             </div>
           </div>
         </div>

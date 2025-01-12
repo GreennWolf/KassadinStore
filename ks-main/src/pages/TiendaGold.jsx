@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { TopNav } from "@/components/TopNav";
 import { toast } from "sonner";
 import { getAllSkins } from "@/services/champsService";
 import { getAllItems } from "@/services/itemService";
-import { getAllRPPriceConversions } from "@/services/rpConvertionService";
+import { getAllGoldConvertions } from "@/services/goldConvertionService";
+import { purchaseItem } from "@/services/inventoryService";
+
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,6 +30,15 @@ import { ProductGrid } from "@/components/ProductGrid";
 
 const ITEMS_PER_PAGE = 12;
 
+const VALID_TYPES = [
+  { id: "loot", label: "Cofres" },
+  { id: "icon", label: "Iconos" },
+  { id: "presale", label: "Preventa" },
+  { id: "tft", label: "TFT" },
+  { id: "bundle", label: "Bundles" },
+  { id: "unrankeds", label: "Sin Clasificar" }
+];
+
 const SKINS_SUBCATEGORIES = [
   { id: 'all', label: 'Todas las Skins' },
   { id: 'chromas', label: 'Chromas' },
@@ -36,20 +47,25 @@ const SKINS_SUBCATEGORIES = [
 
 const TiendaGold = () => {
   const { category } = useParams();
+  const navigate = useNavigate();
 
-  // Estados para manejo de productos
+  // Estados esenciales
   const [products, setProducts] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [hasMore, setHasMore] = useState(true);
-  const [rpConversions, setRpConversions] = useState([]);
+  const [goldConversions, setGoldConversions] = useState([]);
+  const [availableCategories, setAvailableCategories] = useState([]);
   
-  // Estados para filtros
+  // Estados de carga y UI
+  const [isLoading, setIsLoading] = useState(false);
+  const [isPurchasing, setIsPurchasing] = useState(false);
+  
+  // Estados de filtrado y paginación
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSubcategory, setSelectedSubcategory] = useState("all");
-  const [sortOrder, setSortOrder] = useState("asc");
   const [currentPage, setCurrentPage] = useState(1);
+  const [sortOrder, setSortOrder] = useState("asc");
+  const [hasMore, setHasMore] = useState(true);
 
-  // Estado para modal de confirmación
+  // Estado para modal
   const [confirmationModal, setConfirmationModal] = useState({
     isOpen: false,
     product: null
@@ -57,27 +73,55 @@ const TiendaGold = () => {
 
   // Referencias
   const loadingRef = useRef(null);
+  const infiniteScrollRef = useRef(null);
   const abortControllerRef = useRef(null);
-  const timeoutRef = useRef(null);
+  const searchTimeoutRef = useRef(null);
 
-  // Cargar conversiones de RP
+  const loadAvailableCategories = useCallback(async () => {
+    try {
+      const availableCats = [];
+      for (const type of VALID_TYPES) {
+        const response = await getAllItems({ 
+          type: type.id, 
+          limit: 1, 
+          reward: true 
+        });
+        if (response?.data?.length > 0) {
+          availableCats.push(type);
+        }
+      }
+      setAvailableCategories(availableCats);
+      
+      if (!category && availableCats.length > 0) {
+        navigate(`/tiendaOro/${availableCats[0].id}`);
+      }
+    } catch (error) {
+      console.error('Error loading available categories:', error);
+    }
+  }, [navigate, category]);
+
   useEffect(() => {
-    const loadRPConversions = async () => {
+    loadAvailableCategories();
+  }, [loadAvailableCategories]);
+
+  useEffect(() => {
+    const loadGoldConversions = async () => {
       try {
-        const conversions = await getAllRPPriceConversions();
+        const conversions = await getAllGoldConvertions();
         if (Array.isArray(conversions)) {
-          setRpConversions(conversions);
+          setGoldConversions(conversions);
         }
       } catch (error) {
-        console.error('Error loading RP conversions:', error);
+        console.error('Error loading gold conversions:', error);
       }
     };
-    loadRPConversions();
+    loadGoldConversions();
   }, []);
 
-  // Función para obtener el precio en oro
   const getPrice = useCallback((product) => {
-    const conversion = rpConversions.find(conv => 
+    if (!product.priceRP) return 'N/A';
+    
+    const conversion = goldConversions.find(conv => 
       conv.rpPrice?._id === (product.priceRP._id || product.priceRP)
     );
 
@@ -88,9 +132,24 @@ const TiendaGold = () => {
       maximumFractionDigits: 0,
       useGrouping: true
     });
-  }, [rpConversions]);
+  }, [goldConversions]);
 
-  // Función principal para cargar productos
+  const sortProducts = useCallback((products, order) => {
+    return [...products].sort((a, b) => {
+      const priceA = parseInt(getPrice(a).replace(/\D/g, '')) || 0;
+      const priceB = parseInt(getPrice(b).replace(/\D/g, '')) || 0;
+      
+      return order === 'asc' ? priceA - priceB : priceB - priceA;
+    });
+  }, [getPrice]);
+
+  const handleCategoryChange = useCallback((newCategory) => {
+    navigate(`/tienda-gold/${newCategory}`);
+    setCurrentPage(1);
+    setProducts([]);
+    setSearchQuery("");
+  }, [navigate]);
+
   const loadProducts = useCallback(async (pageNum) => {
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
@@ -105,6 +164,7 @@ const TiendaGold = () => {
         search: searchQuery,
         sort: sortOrder,
         type: category,
+        reward: true,
         orderByNew: true,
       };
 
@@ -113,9 +173,15 @@ const TiendaGold = () => {
         const response = await getAllItems(params, abortControllerRef.current.signal);
         
         if (response?.data) {
-          const validChromas = response.data.filter(item => 
-            item && item.type === 'chromas' && item.skin
+          let validChromas = response.data.filter(item => 
+            item && 
+            item.type === 'chromas' && 
+            item.skin &&
+            item.reward
           );
+
+          validChromas = sortProducts(validChromas, sortOrder);
+          
           setProducts(prev => pageNum === 1 ? validChromas : [...prev, ...validChromas]);
           setHasMore(response.hasMore);
         }
@@ -128,7 +194,9 @@ const TiendaGold = () => {
         const response = await service(params, abortControllerRef.current.signal);
 
         if (response?.data) {
-          setProducts(prev => pageNum === 1 ? response.data : [...prev, ...response.data]);
+          let filteredData = response.data.filter(item => item.reward);
+          let sortedData = sortProducts(filteredData, sortOrder);
+          setProducts(prev => pageNum === 1 ? sortedData : [...prev, ...sortedData]);
           setHasMore(response.hasMore);
         }
       }
@@ -140,82 +208,83 @@ const TiendaGold = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [category, searchQuery, selectedSubcategory, sortOrder]);
+  }, [category, searchQuery, selectedSubcategory, sortOrder, sortProducts]);
 
-  // Efecto para búsqueda con debounce
   useEffect(() => {
-    if (timeoutRef.current) {
-      clearTimeout(timeoutRef.current);
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
     }
 
-    timeoutRef.current = setTimeout(() => {
+    searchTimeoutRef.current = setTimeout(() => {
       setCurrentPage(1);
       setProducts([]);
-      setHasMore(true);
       loadProducts(1);
     }, 300);
 
     return () => {
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
       }
-    };
-  }, [searchQuery, loadProducts]);
-
-  // Efecto para cambios de categoría/subcategoría
-  useEffect(() => {
-    setCurrentPage(1);
-    setProducts([]);
-    setHasMore(true);
-    if (category !== 'skins') {
-      setSelectedSubcategory('all');
-    }
-    loadProducts(1);
-
-    return () => {
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
     };
-  }, [category, selectedSubcategory, loadProducts]);
+  }, [category, selectedSubcategory, searchQuery, sortOrder, loadProducts]);
 
-  // Observer para infinite scroll
   useEffect(() => {
-    if (!loadingRef.current || isLoading || !hasMore) return;
+    if (!infiniteScrollRef.current || isLoading || !hasMore) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting && hasMore) {
-          setCurrentPage(prev => prev + 1);
-          loadProducts(currentPage + 1);
+        const [entry] = entries;
+        if (entry.isIntersecting && !isLoading && hasMore) {
+          const nextPage = currentPage + 1;
+          setCurrentPage(nextPage);
+          loadProducts(nextPage);
         }
       },
       { threshold: 0.1, rootMargin: '100px' }
     );
 
-    observer.observe(loadingRef.current);
+    observer.observe(infiniteScrollRef.current);
     return () => observer.disconnect();
   }, [isLoading, hasMore, currentPage, loadProducts]);
 
-  // Manejadores de eventos
-  const handleBuyClick = (product) => {
+  const handleBuyClick = useCallback((product) => {
     setConfirmationModal({
       isOpen: true,
       product: product
     });
-  };
+  }, []);
 
-  const handleConfirmPurchase = async () => {
+  const handleConfirmPurchase = useCallback(async () => {
+    if (!confirmationModal.product) return;
+
+    setIsPurchasing(true);
     try {
-      // Aquí iría la lógica de compra con oro
-      const goldPrice = getPrice(confirmationModal.product);
-      toast.success(`Compra exitosa: ${confirmationModal.product.name} por ${goldPrice} oro`);
+        const goldPrice = getPrice(confirmationModal.product);
+        if (goldPrice === 'N/A') {
+            throw new Error('No se pudo determinar el precio del item');
+        }
+
+        const itemType = confirmationModal.product.NombreSkin ? 'skin' : 'item';
+        
+        await purchaseItem({
+            itemType,
+            itemId: confirmationModal.product._id,
+            quantity: 1
+        });
+
+        toast.success(`Has comprado ${confirmationModal.product.name || confirmationModal.product.NombreSkin} por ${goldPrice} oro`);
+        
+        loadProducts(currentPage);
     } catch (error) {
-      toast.error("Error al realizar la compra");
+        toast.error(error.message || "Error al realizar la compra");
     } finally {
-      setConfirmationModal({ isOpen: false, product: null });
+        setIsPurchasing(false);
+        setConfirmationModal({ isOpen: false, product: null });
     }
-  };
+  }, [confirmationModal.product, getPrice, loadProducts, currentPage]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -247,6 +316,28 @@ const TiendaGold = () => {
               </SelectContent>
             </Select>
 
+            {/* Categorías para items que no son skins */}
+            {category !== 'skins' && availableCategories.length > 0 && (
+              <div className="space-y-2">
+                <h3 className="font-semibold text-lg">Categorías</h3>
+                <div className="flex flex-col gap-1">
+                  {availableCategories.map(cat => (
+                    <button
+                      key={cat.id}
+                      onClick={() => handleCategoryChange(cat.id)}
+                      className={`text-left py-2 px-4 rounded transition-colors ${
+                        category === cat.id
+                          ? 'bg-primary/20 text-primary'
+                          : 'hover:bg-primary/10'
+                      }`}
+                    >
+                      {cat.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Subcategorías para skins */}
             {category === 'skins' && (
               <div className="space-y-2">
@@ -272,30 +363,44 @@ const TiendaGold = () => {
 
           {/* Contenido principal */}
           <div className="flex-1 space-y-6">
-            <ProductGrid 
-              products={products}
-              onBuyClick={handleBuyClick}
-              getPrice={getPrice}
-              isGoldStore={true}
-              category={category}
-              subcategory={selectedSubcategory}
-            />
+            {/* Products Grid */}
+            {products.length > 0 && (
+              <ProductGrid 
+                products={products}
+                onBuyClick={handleBuyClick}
+                getPrice={getPrice}
+                isGoldStore={true}
+                category={category}
+                subcategory={selectedSubcategory}
+              />
+            )}
 
-            {/* Loading indicator */}
-            {hasMore && (
-              <div 
-                ref={loadingRef}
-                className="flex justify-center items-center py-8"
-              >
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            {/* Loading States */}
+            {/* Initial Loading */}
+            {isLoading && products.length === 0 && (
+              <div className="flex justify-center items-center py-8">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
               </div>
             )}
 
-            {/* Empty state */}
+            {/* Infinite Scroll Loading */}
+            {products.length > 0 && (
+              <div ref={infiniteScrollRef} className="w-full">
+                {hasMore && (
+                  <div className="flex justify-center items-center py-8">
+                    {isLoading && (
+                      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Empty State */}
             {!isLoading && products.length === 0 && (
               <div className="text-center py-12">
                 <p className="text-lg text-muted-foreground">
-                  No se encontraron productos
+                  No se encontraron productos disponibles para comprar con oro
                 </p>
               </div>
             )}
@@ -311,7 +416,8 @@ const TiendaGold = () => {
             <AlertDialogHeader>
               <AlertDialogTitle>Confirmar Compra</AlertDialogTitle>
               <AlertDialogDescription>
-                ¿Estás seguro que deseas comprar {confirmationModal.product?.name} por{' '}
+                ¿Estás seguro que deseas comprar{' '}
+                {confirmationModal.product?.name || confirmationModal.product?.NombreSkin} por{' '}
                 {confirmationModal.product && getPrice(confirmationModal.product)} oro?
               </AlertDialogDescription>
             </AlertDialogHeader>
@@ -326,6 +432,6 @@ const TiendaGold = () => {
       </main>
     </div>
   );
-};
+}
 
 export default TiendaGold;

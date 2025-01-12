@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from "react";
 import { getAllItems, deleteItem, editItem, createItem, activeItem } from "../../services/itemService";
 import { getAllSkins, createSkin, updateSkin, deleteSkin, obtenerActualizaciones, activeSkin } from "../../services/champsService";
 import { getAllRpPrice } from "../../services/rpService";
+import { getAllUnrankeds, createUnranked, updateUnranked, deactivateUnranked, activateUnranked } from "../../services/unrankedService";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, MoreVertical } from "lucide-react";
@@ -29,10 +30,11 @@ import {
 import { toast } from "react-toastify";
 import { ProductModal } from "./adminProductos/ProductModal";
 import rpLogo from '@/assets/RP_icon.webp';
+import UpdateCatalogButton from "./adminProductos/UpdateCatalogButton";
 
 const ITEMS_PER_PAGE = 20;
 
-export const AdminProducts = () => {
+export const AdminProducts = ({isUpdating, setIsUpdating}) => {
   // States
   const [activeCategory, setActiveCategory] = useState("skins");
   const [searchTerm, setSearchTerm] = useState("");
@@ -84,26 +86,37 @@ export const AdminProducts = () => {
         page: shouldReset ? 1 : page,
         limit: ITEMS_PER_PAGE,
         search: searchTerm,
-        type: activeCategory !== 'skins' ? activeCategory : undefined,
+        type: activeCategory !== 'skins' && activeCategory !== 'unrankeds' ? activeCategory : undefined,
         showAll: true
       };
 
-      const [skinsData, rpData, itemsData] = await Promise.all([
-        getAllSkins(params),
-        getAllRpPrice(),
-        getAllItems(params)
-      ]);
-
-      if (shouldReset) {
-        setSkins(skinsData.data || []);
-        setItems(itemsData.data || []);
+      let response;
+      if (activeCategory === 'unrankeds') {
+        response = await getAllUnrankeds(params);
+        if (shouldReset) {
+          setItems(response.data || []);
+        } else {
+          setItems(prev => [...prev, ...(response.data || [])]);
+        }
+        setHasMore(response.hasMore);
       } else {
-        setSkins(prev => [...prev, ...(skinsData.data || [])]);
-        setItems(prev => [...prev, ...(itemsData.data || [])]);
-      }
+        const [skinsData, rpData, itemsData] = await Promise.all([
+          getAllSkins(params),
+          getAllRpPrice(),
+          getAllItems(params)
+        ]);
 
-      setRpPrice(rpData || []);
-      setHasMore(activeCategory === 'skins' ? skinsData.hasMore : itemsData.hasMore);
+        if (shouldReset) {
+          setSkins(skinsData.data || []);
+          setItems(itemsData.data || []);
+        } else {
+          setSkins(prev => [...prev, ...(skinsData.data || [])]);
+          setItems(prev => [...prev, ...(itemsData.data || [])]);
+        }
+
+        setRpPrice(rpData || []);
+        setHasMore(activeCategory === 'skins' ? skinsData.hasMore : itemsData.hasMore);
+      }
     } catch (error) {
       if (error.name !== 'AbortError') {
         console.error('Error loading data:', error);
@@ -118,11 +131,8 @@ export const AdminProducts = () => {
   const filteredProducts = React.useMemo(() => {
     const products = activeCategory === "skins" ? skins : items;
     return products.filter(product => {
-      const name = product.name || product.NombreSkin;
-      return (
-        name?.toLowerCase().includes(searchTerm.toLowerCase()) &&
-        (activeCategory === "skins" || product.type === activeCategory)
-      );
+      const searchField = product.NombreSkin || product.name || product.titulo;
+      return searchField?.toLowerCase().includes(searchTerm.toLowerCase());
     });
   }, [activeCategory, searchTerm, items, skins]);
 
@@ -165,18 +175,6 @@ export const AdminProducts = () => {
   }, [loading, hasMore]);
 
   // Handlers
-  const handleUpdateCatalog = async () => {
-    setUpdatingPatch(true);
-    try {
-      await obtenerActualizaciones();
-      await fetchData(true);
-      toast.success('Catálogo actualizado exitosamente');
-    } catch (error) {
-      toast.error('Error al actualizar el catálogo');
-    } finally {
-      setUpdatingPatch(false);
-    }
-  };
 
   const handleCreateProduct = async (productData) => {
     try {
@@ -184,15 +182,35 @@ export const AdminProducts = () => {
       if (activeCategory === 'skins') {
         await createSkin(productData);
         toast.success('Skin creada exitosamente');
+      } else if (activeCategory === 'unrankeds') {
+        // console.log(activeCategory);
+        const formData = new FormData();
+        Object.entries(productData).forEach(([key, value]) => {
+          if (value !== undefined && value !== null) {
+            if (key === 'src' && value instanceof File) {
+              formData.append('image', value);
+            } else {
+              formData.append(key, value);
+            }
+          }
+        });
+        
+        await createUnranked(formData);
+        toast.success('Cuenta unranked creada exitosamente');
       } else {
         const formData = new FormData();
-        formData.append('name', productData.name);
-        formData.append('type', productData.type);
-        formData.append('priceRP', productData.priceRP);
-        
-        if (productData.srcWeb) {
-          formData.append('srcWeb', productData.srcWeb);
-        }
+        Object.entries({
+          name: productData.name,
+          type: productData.type,
+          priceRP: productData.priceRP,
+          srcWeb: productData.srcWeb || '',
+          reward: !!productData.reward,
+          ...(productData.type === 'chromas' && { skin: productData.skin }),
+        }).forEach(([key, value]) => {
+          if (value !== undefined && value !== null) {
+            formData.append(key, value);
+          }
+        });
         
         if (productData.src instanceof File) {
           formData.append('image', productData.src);
@@ -218,23 +236,31 @@ export const AdminProducts = () => {
       if (activeCategory === 'skins') {
         await updateSkin(selectedProduct._id, productData);
         toast.success('Skin actualizada exitosamente');
-      } else {
+      } else if (activeCategory === 'unrankeds') {
         const formData = new FormData();
-        
-        Object.entries({
-          name: productData.name,
-          type: productData.type,
-          priceRP: productData.priceRP,
-          srcWeb: productData.srcWeb || ''
-        }).forEach(([key, value]) => {
+        Object.entries(productData).forEach(([key, value]) => {
           if (value !== undefined && value !== null) {
-            formData.append(key, value);
+            if (key === 'src' && value instanceof File) {
+              formData.append('image', value);
+            } else {
+              formData.append(key, value);
+            }
           }
         });
-        
-        if (productData.src instanceof File) {
-          formData.append('image', productData.src);
-        }
+
+        await updateUnranked(selectedProduct._id, formData);
+        toast.success('Cuenta unranked actualizada exitosamente');
+      } else {
+        const formData = new FormData();
+        Object.entries(productData).forEach(([key, value]) => {
+          if (value !== undefined && value !== null) {
+            if (key === 'src' && value instanceof File) {
+              formData.append('image', value);
+            } else {
+              formData.append(key, value);
+            }
+          }
+        });
 
         await editItem(selectedProduct._id, formData);
         toast.success('Item actualizado exitosamente');
@@ -252,11 +278,13 @@ export const AdminProducts = () => {
   };
 
   const handleDelete = async (product) => {
-    if (window.confirm(`¿Estás seguro que deseas eliminar "${product.name || product.NombreSkin}"?`)) {
+    if (window.confirm(`¿Estás seguro que deseas eliminar "${product.name || product.NombreSkin || product.titulo}"?`)) {
       try {
         setLoading(true);
         if (activeCategory === 'skins') {
           await deleteSkin(product._id);
+        } else if (activeCategory === 'unrankeds') {
+          await deactivateUnranked(product._id);
         } else {
           await deleteItem(product._id);
         }
@@ -275,6 +303,8 @@ export const AdminProducts = () => {
       setLoading(true);
       if (activeCategory === 'skins') {
         await activeSkin(product._id);
+      } else if (activeCategory === 'unrankeds') {
+        await activateUnranked(product._id);
       } else {
         await activeItem(product._id);
       }
@@ -286,7 +316,6 @@ export const AdminProducts = () => {
       setLoading(false);
     }
   };
-
   return (
     <div className="w-full space-y-4">
       <div className="flex justify-between items-center">
@@ -294,7 +323,7 @@ export const AdminProducts = () => {
           <div className="relative w-72">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Buscar productos..."
+              placeholder={`Buscar ${activeCategory === 'skins' ? 'skins' : activeCategory === 'unrankeds' ? 'cuentas' : 'productos'}...`}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-8"
@@ -314,9 +343,9 @@ export const AdminProducts = () => {
           </Select>
         </div>
         <div className="flex gap-2">
-          <Button onClick={handleUpdateCatalog} variant="outline">
-            Actualizar Catálogo
-          </Button>
+          {activeCategory === 'skins' && (
+            <UpdateCatalogButton  fetchData={fetchData} isUpdating={isUpdating} setIsUpdating={setIsUpdating}/>
+          )}  
           <Button
             onClick={() => {
               setModalMode("create");
@@ -324,7 +353,7 @@ export const AdminProducts = () => {
               setModalOpen(true);
             }}
           >
-            Crear Producto
+            Crear {activeCategory === 'skins' ? 'Skin' : activeCategory === 'unrankeds' ? 'Cuenta' : 'Producto'}
           </Button>
         </div>
       </div>
@@ -335,9 +364,20 @@ export const AdminProducts = () => {
             <TableHeader>
               <TableRow>
                 <TableHead>Imagen</TableHead>
-                <TableHead>Nombre</TableHead>
+                <TableHead>{activeCategory === 'unrankeds' ? 'Título' : 'Nombre'}</TableHead>
                 <TableHead>RP</TableHead>
+                {activeCategory === 'unrankeds' && (
+                  <>
+                    <TableHead>Región</TableHead>
+                    <TableHead>Nivel</TableHead>
+                    <TableHead>Esencia Azul</TableHead>
+                    <TableHead>Esencia Naranja</TableHead>
+                  </>
+                )}
                 <TableHead>Estado</TableHead>
+                {activeCategory !== 'unrankeds' && (
+                  <TableHead>Recompensa</TableHead>
+                )}
                 <TableHead className="w-[100px]">Acciones</TableHead>
               </TableRow>
             </TableHeader>
@@ -347,16 +387,39 @@ export const AdminProducts = () => {
                   <TableCell>
                     <img
                       src={product.srcLocal || product.src}
-                      alt={product.name || product.NombreSkin}
+                      alt={product.name || product.NombreSkin || product.titulo}
                       className="h-16 w-16 object-cover rounded-lg"
                     />
                   </TableCell>
-                  <TableCell>{product.name || product.NombreSkin}</TableCell>
-                  <TableCell className=" gap-2">
-                    <span className="flex gap-2 items-center">{product.priceRPData?.valueRP || product.priceRP.valueRP}<img src={rpLogo} alt="RP" className="w-6 h-6" /></span>
-                    
+                  <TableCell>
+                    {product.type === 'chromas' && product.skin 
+                      ? `${product.name} [${product.skin.NombreSkin}]` 
+                      : product.name || product.NombreSkin || product.titulo}
                   </TableCell>
-                  <TableCell>{product.active ? "Activo" : "Inactivo"}</TableCell>
+                  <TableCell className="gap-2">
+                    <span className="flex gap-2 items-center">
+                      {product.priceRP?.valueRP}
+                      <img src={rpLogo} alt="RP" className="w-6 h-6" />
+                    </span>
+                  </TableCell>
+                  {activeCategory === 'unrankeds' && (
+                    <>
+                      <TableCell>{product.region}</TableCell>
+                      <TableCell>{product.nivel}</TableCell>
+                      <TableCell>{product.escencia}</TableCell>
+                      <TableCell>{product.escenciaNaranja}</TableCell>
+                    </>
+                  )}
+                  <TableCell>
+                    <span className={`px-2 py-1 rounded-full text-xs ${
+                      product.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                    }`}>
+                      {product.active ? 'Activo' : 'Inactivo'}
+                    </span>
+                  </TableCell>
+                  {activeCategory !== 'unrankeds' && (
+                    <TableCell>{product.reward ? "SI" : "NO"}</TableCell>
+                  )}
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -364,7 +427,7 @@ export const AdminProducts = () => {
                           <MoreVertical className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent className='bg-black ' align="end">
+                      <DropdownMenuContent className='bg-black' align="end">
                         <DropdownMenuItem
                           onClick={() => {
                             setSelectedProduct(product);
@@ -378,9 +441,9 @@ export const AdminProducts = () => {
                           className="text-red-600"
                           onClick={() => {
                             if(product.active){
-                                handleDelete(product)
-                            }else{
-                                handleActive(product)
+                              handleDelete(product);
+                            } else {
+                              handleActive(product);
                             }
                           }}
                         >
@@ -430,6 +493,6 @@ export const AdminProducts = () => {
       )}
     </div>
   );
-};
+}
 
-export default AdminProducts;
+export default AdminProducts

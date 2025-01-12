@@ -7,6 +7,7 @@ const Currency = require('../database/Models/currencyModel');
 const CurrencyCupon = require('../database/Models/currencyCuponModel')
 const Status = require('../database/Models/statusModel');
 const Item = require('../database/Models/itemsModel');
+const Unranked = require('../database/Models/unrankedModel');
 const Cupon = require('../database/Models/cuponsModel');
 const User = require('../database/Models/userModel')
 const { CustomError } = require('../middlewares/errorHandler');
@@ -25,6 +26,35 @@ async function ensureReceiptsDir() {
         throw new CustomError('Error al crear directorio de recibos', 500);
     }
 }
+
+const chargeAccountData = async (purchaseId, itemId, accountData) => {
+    try {
+        const purchase = await Purchase.findById(purchaseId);
+        if (!purchase) {
+            throw new CustomError('Compra no encontrada', 404);
+        }
+
+        // Encontrar el ítem específico en el array de items
+        const itemIndex = purchase.items.findIndex(
+            item => item.itemId.toString() === itemId && item.itemType === 'Unranked'
+        );
+
+        if (itemIndex === -1) {
+            throw new CustomError('Item no encontrado en la compra o no es una cuenta Unranked', 404);
+        }
+
+        // Actualizar los datos de la cuenta
+        purchase.items[itemIndex].accountData = {
+            email: accountData.email,
+            password: accountData.password
+        };
+
+        await purchase.save();
+        return purchase;
+    } catch (error) {
+        throw error;
+    }
+};
 
 async function calculateAndUpdateUserProgress(userId, currencyId, finalPrice) {
     try {
@@ -70,8 +100,6 @@ async function calculateAndUpdateUserProgress(userId, currencyId, finalPrice) {
 }
 
 async function validatePurchaseItems(items, selectedCurrency) {
-    console.log(items)
-
     let totalPrice = 0;
     let totalRP = 0;
 
@@ -82,15 +110,37 @@ async function validatePurchaseItems(items, selectedCurrency) {
         return {
             itemId: item._id,
             isSkin: item.isSkin,
+            isUnranked: item.isUnranked,
             itemType: item.itemType,
             quantity: item.quantity || 1,
-            isSeguro:item.isSeguroRP
+            isSeguro: item.isSeguroRP != undefined && item.isSeguroRP != null ? item.isSeguroRP : true,
+            // Guardar detalles adicionales para unrankeds
+            ...(item.isUnranked && {
+                itemDetails: {
+                    region: item.region,
+                    nivel: item.nivel,
+                    escencia: item.escencia,
+                    escenciaNaranja: item.escenciaNaranja,
+                    rpAmount: item.rpAmount,
+                    handUpgrade: item.handUpgrade
+                }
+            })
         };
     });
 
     for (const item of itemsWithQuantity) {
-        const itemModel = item.isSkin ? Skin : Item;
-        const itemData = await itemModel.findById(item.itemId).populate('priceRP');
+        let itemData;
+        let itemModel;
+
+        if (item.isUnranked) {
+            itemModel = Unranked;
+        } else if (item.isSkin) {
+            itemModel = Skin;
+        } else {
+            itemModel = Item;
+        }
+
+        itemData = await itemModel.findById(item.itemId).populate('priceRP');
         
         if (!itemData?.priceRP) {
             throw new CustomError(`Item no encontrado o sin precio: ${item.itemId}`, 404);
@@ -110,7 +160,9 @@ async function validatePurchaseItems(items, selectedCurrency) {
             throw new CustomError('Conversión de precio no encontrada', 404);
         }
         
-        const price = item.isSeguro ? conversion.priceSeguro : conversion.priceBarato
+        // Para unrankeds, siempre usamos el precio seguro
+        const price = item.isUnranked ? conversion.priceSeguro : 
+                     (item.isSeguro ? conversion.priceSeguro : conversion.priceBarato);
 
         totalPrice += price * item.quantity;
     }
@@ -154,7 +206,6 @@ const purchaseController = {
     createPurchase: async (req, res, next) => {
         try {
             const { userId, items, paymentMethodId, riotName,discordName ,region, selectedCurrency, cuponId } = req.body;
-            console.log(riotName)
             if (!riotName || !req.file) {
                 throw new CustomError('Faltan datos requeridos', 400);
             }
@@ -608,6 +659,21 @@ const statusController = {
             const filteredPurchases = purchases.filter(purchase => purchase.status.statusId !== null);
     
             res.json(filteredPurchases);
+        } catch (error) {
+            next(error);
+        }
+    },
+    chargeAccountData: async (req, res, next) => {
+        try {
+            const { purchaseId, itemId } = req.params;
+            const { email, password } = req.body;
+
+            const updatedPurchase = await chargeAccountData(purchaseId, itemId, { email, password });
+
+            res.json({
+                message: 'Datos de cuenta actualizados exitosamente',
+                purchase: updatedPurchase
+            });
         } catch (error) {
             next(error);
         }

@@ -1,8 +1,7 @@
 import axios from 'axios';
-
 // Define la URL base de la API
-const API_BASE_URL = 'http://localhost:3000/api'; // Cambia el puerto si es necesario
-const API_IMAGE_BASE = 'http://localhost:3000/currencys'; // Cambia el puerto si es necesario
+const API_BASE_URL = `${import.meta.env.VITE_API_URL}/api`; // Cambia el puerto si es necesario
+const API_IMAGE_BASE = `${import.meta.env.VITE_API_URL}/currencys`; // Cambia el puerto si es necesario
 
 // Crear una nueva divisa
 export const createCurrency = async (formData) => {

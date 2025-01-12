@@ -54,7 +54,7 @@ export function XpConversionManager() {
 
   const filteredConversions = useMemo(() => {
     return conversions.filter((conversion) => {
-      console.log(conversion)
+      // console.log(conversion)
       const currency = currencies.find((c) => c._id === conversion.currency._id);
       return currency?.name.toLowerCase().includes(searchTerm.toLowerCase());
     });

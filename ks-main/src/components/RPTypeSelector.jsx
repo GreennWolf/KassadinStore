@@ -5,7 +5,7 @@ import { InfoIcon } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState } from "react";
 
-export const RPTypeSelector = ({ onRPTypeChange }) => {
+export const RPTypeSelector = ({ onRPTypeChange , onInfoClick }) => {
   const [isSeguro, setIsSeguro] = useState(true);
 
   const handleChange = (checked) => {
@@ -27,7 +27,7 @@ export const RPTypeSelector = ({ onRPTypeChange }) => {
           <span className="text-sm font-bold text-muted-foreground">Barato</span>
         </div>
         <Link 
-          to="/rp-info"
+          onClick={onInfoClick}
           className="text-xs text-primary hover:underline flex items-center mt-1"
         >
           <InfoIcon className="w-3 h-3 mr-1" />

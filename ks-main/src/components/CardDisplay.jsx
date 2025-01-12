@@ -39,7 +39,7 @@ export const CardDisplay = ({ user }) => {
         try {
           const tp = await getTotalPurchases(user._id); // Asegúrate de que este sea el nombre correcto de la función
           setTotalPurchases(tp.totalPurchases);
-          console.log(tp)
+          // console.log(tp)
         } catch (error) {
           console.error("Error fetching total purchases:", error);
         }

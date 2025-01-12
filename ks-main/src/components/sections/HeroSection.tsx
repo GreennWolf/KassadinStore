@@ -1,18 +1,14 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import bg from '../../assets/bg2.svg';
+import ds from '../../assets/ds.png';
 
 export const HeroSection = () => {
   const navigate = useNavigate();
 
   return (
-    <div 
-      className="relative min-h-[90vh] flex items-center justify-center overflow-hidden bg-cover bg-center bg-no-repeat"
-      style={{ backgroundImage: `url(${bg})` }}
-    >
-      {/* Overlay para asegurar legibilidad del texto */}
-      <div className="absolute inset-0 bg-black/50"></div>
-
+    <div className="relative min-h-[90vh] flex items-center justify-center overflow-hidden bg-no-repeat bg-cover bg-black"
+    style={{ backgroundImage: `url(${bg})` }}>
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute inset-0 bg-noise opacity-5"></div>
@@ -23,8 +19,13 @@ export const HeroSection = () => {
       {/* Content container */}
       <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
         {/* Badge */}
-        <div className="inline-flex items-center px-3 py-1 mb-8 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm">
-          <span className="text-sm font-medium text-white">SERVICIO LIDER LOL</span>
+        <div className="inline-flex items-center gap-2 px-3 py-1 mb-8 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm">
+          <img 
+            src={ds}
+            alt="Logo" 
+            className="w-4 h-4 object-contain"
+          />
+          <span className="text-sm font-medium text-white">+11k miembros</span>
         </div>
 
         {/* Main heading with gradient */}
@@ -46,16 +47,15 @@ export const HeroSection = () => {
             Explorar Tienda
           </Button>
           <Button 
-            variant="outline"
-            onClick={() => navigate('/eloboost')}
-            className="px-8 py-6 text-lg border-white text-white hover:bg-white/10 transition-all duration-300 transform hover:scale-105"
-          >
-            Servicios de Eloboost
+              variant="outline"
+              onClick={() => window.open('https://discord.com/invite/T9WJ2jGvAD', '_blank')}
+              className="px-8 py-6 text-lg border-white text-white hover:bg-white/10 transition-all duration-300 transform hover:scale-105"
+            >
+              Únete a Discord
           </Button>
+
         </div>
       </div>
     </div>
   );
 };
-
-export default HeroSection;

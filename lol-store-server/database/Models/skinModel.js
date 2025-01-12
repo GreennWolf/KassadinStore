@@ -25,6 +25,11 @@ const skinSchema = new mongoose.Schema({
         required: true,
     },
     new:{type:Boolean},
+    reward:{
+        type:Boolean,
+        require:true,
+        default:false,
+    },
     active: {
         type: Boolean,
         required: true,

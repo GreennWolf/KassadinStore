@@ -6,41 +6,73 @@ const CART_STORAGE_KEY = "shopping-cart";
 const StoreContext = createContext();
 
 export const StoreProvider = ({ children }) => {
-  // Estado inicial del carrito desde localStorage o vacío
   const [cart, setCart] = useState(() => {
     const savedCart = localStorage.getItem(CART_STORAGE_KEY);
     return savedCart ? JSON.parse(savedCart) : [];
   });
 
-  // Guardar el carrito en localStorage cada vez que cambia
   useEffect(() => {
     localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
   }, [cart]);
 
-  // Añadir producto al carrito
-  const addToCart = (item,isSkin,isSeguroRP) => {
-    console.log(isSeguroRP)
+  const addToCart = (item, isSkin = false, isSeguroRP = true, isUnranked = false) => {
+    // Determinar el tipo de item y la descripción
+    let itemType = 'Item';
+    let itemDescription = item.name;
+    
+    if (isSkin) {
+      itemType = 'Skin';
+      itemDescription = item.NombreSkin;
+    } else if (isUnranked) {
+      itemType = 'Unranked';
+      itemDescription = `Cuenta ${item.region} - Nivel ${item.nivel}`;
+    }
+
     setCart((prev) => {
-      const existingItem = prev.find((cartItem) => cartItem._id === item._id && cartItem.isSeguroRP == isSeguroRP);
+      // Buscar el item existente considerando todos los parámetros
+      const existingItem = prev.find(
+        (cartItem) => 
+          cartItem._id === item._id && 
+          cartItem.isSeguroRP === isSeguroRP &&
+          cartItem.isUnranked === isUnranked
+      );
+
       if (existingItem) {
         return prev.map((cartItem) =>
           cartItem._id === item._id
             ? { ...cartItem, quantity: cartItem.quantity + 1 }
             : cartItem
         );
-      } else {
-        return [...prev, { ...item, quantity: 1 ,isSkin,isSeguroRP, itemType: isSkin ? 'Skin':'Item'}];
       }
+
+      // Si es un nuevo item, añadirlo con sus propiedades
+      return [...prev, { 
+        ...item, 
+        quantity: 1,
+        isSkin,
+        isSeguroRP,
+        isUnranked,
+        itemType,
+        ...(isUnranked && {
+          itemDetails: {
+            region: item.region,
+            nivel: item.nivel,
+            escencia: item.escencia,
+            escenciaNaranja: item.escenciaNaranja,
+            rpAmount: item.rpAmount,
+            handUpgrade: item.handUpgrade
+          }
+        })
+      }];
     });
 
     toast.success("Producto añadido al carrito", {
-      description: item.name || item.NombreSkin,
+      description: itemDescription,
       position: "bottom-right",
       duration: 2000,
     });
   };
 
-  // Eliminar producto del carrito
   const removeFromCart = (itemId) => {
     setCart((prev) => {
       return prev
@@ -49,27 +81,27 @@ export const StoreProvider = ({ children }) => {
             ? { ...item, quantity: item.quantity - 1 }
             : item
         )
-        .filter((item) => item.quantity > 0); // Filtrar productos con cantidad mayor a 0
+        .filter((item) => item.quantity > 0);
     });
   };
 
-  // Vaciar el carrito completamente
   const clearCart = () => {
     setCart([]);
     localStorage.removeItem(CART_STORAGE_KEY);
   };
 
-  // Calcular el total del carrito (precio total)
-  const getCartTotal = () => {
-    return cart.reduce((total, item) => total + item.price * item.quantity, 0);
+  const getCartTotal = (selectedCurrency) => {
+    return cart.reduce((total, item) => {
+      if (!selectedCurrency?.symbol) return total;
+      const price = parseFloat(item.price) || 0;
+      return total + price * (item.quantity || 1);
+    }, 0);
   };
 
-  // Calcular el total de items en el carrito (cantidad total)
   const getTotalItems = () => {
-    return cart.reduce((total, item) => total + item.quantity, 0);
+    return cart.reduce((total, item) => total + (item.quantity || 1), 0);
   };
 
-  // Proveer funciones y estado del carrito al contexto
   return (
     <StoreContext.Provider
       value={{
@@ -86,7 +118,6 @@ export const StoreProvider = ({ children }) => {
   );
 };
 
-// Hook personalizado para usar el contexto del Store
 export const useStore = () => {
   const context = useContext(StoreContext);
   if (context === undefined) {

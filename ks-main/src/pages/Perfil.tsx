@@ -1,6 +1,6 @@
 import { TopNav } from "@/components/TopNav";
 import { CardDisplay } from "@/components/CardDisplay";
-import { TransactionsTable } from "@/components/TransactionsTable";
+import { ProfileTabs } from "@/components/ProfileTabs";
 import { QuickTransfer } from "@/components/QuickTransfer";
 import { useEffect, useState } from "react";
 import { useAuthModal } from "../context/authModalContext";
@@ -24,7 +24,6 @@ const Perfil = () => {
     try {
       setLoading(true);
       const data = await getAllPurchases();
-      // Filtrar por usuario actual
       const user = JSON.parse(localStorage.getItem("user"));
       const userPurchases = data.filter(purchase => purchase.userId._id === user._id);
       setPurchases(userPurchases);
@@ -35,7 +34,6 @@ const Perfil = () => {
     }
   };
 
-  // Función para actualizar purchases después de una confirmación
   const handlePurchaseUpdate = async () => {
     await fetchPurchases();
   };
@@ -59,14 +57,12 @@ const Perfil = () => {
             />
           </div>
 
-          {/* Full width Transactions Table */}
-          <div className="col-span-12">
-            <TransactionsTable 
-              purchases={purchases} 
-              loading={loading}
-              onPurchaseUpdate={handlePurchaseUpdate}
-            />
-          </div>
+          {/* Tabs Section */}
+          <ProfileTabs 
+            purchases={purchases} 
+            loading={loading}
+            onPurchaseUpdate={handlePurchaseUpdate}
+          />
         </div>
       </main>
     </div>

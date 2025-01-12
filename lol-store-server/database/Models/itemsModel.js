@@ -28,6 +28,11 @@ const itemSchema = new mongoose.Schema({
         ref: 'Skin', // Cambiado de 'SkinId' a 'Skin'
         required: false,
     },
+    reward:{
+        type:Boolean,
+        require:true,
+        default:false,
+    },
     active:{
         type:Boolean,
         default:true,   

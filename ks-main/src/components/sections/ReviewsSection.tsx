@@ -1,46 +1,56 @@
-import { Star } from "lucide-react";
-
-const reviews = [
-  {
-    name: "Mirko B.",
-    country: "DE",
-    content: "Excellent service, nice booster and live support, it was fast and smooth",
-    rating: 5,
-    image:'url'
-  },
-  {
-    name: "Musociu",
-    country: "DE",
-    content: "Thank you for completing my order so quickly and safely. I say thank you and recommend you",
-    rating: 5.,
-    image:'url'
-  },
-  {
-    name: "Soraka",
-    country: "US",
-    content: "Excellent customer service.",
-    rating: 5.,
-    image:'url'
-  },
-  {
-    name: "Alex R.",
-    country: "ES",
-    content: "Servicio rápido y profesional, muy recomendado",
-    rating: 5.,
-    image:'url'
-  },
-  {
-    name: "Maria S.",
-    country: "MX",
-    content: "Excelente atención y resultados",
-    rating: 5.,
-    image:'url'
-  }
-];
+import { useEffect, useState, useRef } from "react";
+import { ReviewsCounter } from "./reviews/ReviewsCounter";
+import { ReviewsList } from "./reviews/ReviewsList";
 
 export const ReviewsSection = () => {
+  const [count, setCount] = useState(0);
+  const [isInView, setIsInView] = useState(false);
+  const sectionRef = useRef(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          setIsInView(true);
+        }
+      },
+      { threshold: 0.1 }
+    );
+
+    if (sectionRef.current) {
+      observer.observe(sectionRef.current);
+    }
+
+    return () => {
+      if (sectionRef.current) {
+        observer.unobserve(sectionRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isInView) return;
+
+    const duration = 2000;
+    const steps = 50;
+    const increment = 20000 / steps;
+    const interval = duration / steps;
+
+    let current = 0;
+    const timer = setInterval(() => {
+      current += 1;
+      setCount(Math.min(Math.floor(current * increment), 50000));
+      
+      if (current >= steps) {
+        clearInterval(timer);
+      }
+    }, interval);
+
+    return () => clearInterval(timer);
+  }, [isInView]);
+
   return (
-    <section className="py-16 bg-background relative overflow-hidden">
+    <section ref={sectionRef} className="py-16 bg-background relative overflow-hidden">
       <div className="max-w-7xl mx-auto px-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
           {/* Left side - CTA */}
@@ -56,7 +66,7 @@ export const ReviewsSection = () => {
                 Conectate con otros jugadores y mantente actualizado con nuestras últimas ofertas
               </p>
               <a
-                href="https://discord.gg/your-server"
+                href="discord.com/invite/T9WJ2jGvAD"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 bg-[#5865F2] text-white px-6 py-3 rounded-lg hover:bg-[#4752C4] transition-colors"
@@ -71,42 +81,13 @@ export const ReviewsSection = () => {
 
           {/* Right side - Reviews */}
           <div className="space-y-8">
-            <div className="text-center md:text-left">
-              <p className="text-[#FF6B00] uppercase tracking-wider text-sm mb-4">RESEÑAS</p>
-              <h2 className="text-4xl font-bold mb-4">
-                Más de <span className="text-[#FFA064]">50,000</span> clientes satisfechos
-              </h2>
-            </div>
-
-            <div className="relative overflow-hidden h-[400px]">
-              <div className="absolute top-0 animate-scroll space-y-4">
-                {[...reviews, ...reviews].map((review, index) => (
-                  <div 
-                    key={index} 
-                    className="bg-card p-6 rounded-lg transform hover:scale-105 transition-transform duration-300"
-                  >
-                    <div className="flex items-center gap-1 mb-4">
-                      {[...Array(review.rating)].map((_, i) => (
-                        <Star key={i} className="w-5 h-5 fill-[#00B67A] text-[#00B67A]" />
-                      ))}
-                    </div>
-                    <p className="text-sm mb-4">{review.content}</p>
-                    <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
-                        {review.name[0]}
-                      </div>
-                      <div>
-                        <p className="font-semibold">{review.name}</p>
-                        <p className="text-xs text-muted-foreground">{review.country}</p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+            <ReviewsCounter count={count} />
+            <ReviewsList />
           </div>
         </div>
       </div>
     </section>
   );
 };
+
+export default ReviewsSection;

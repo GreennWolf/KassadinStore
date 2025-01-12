@@ -20,10 +20,6 @@ const rpPriceConversionSchema = new mongoose.Schema({
         type: Number,
         required: true, // Precio en la divisa específica, e.g., 12.99 para USD
     },
-    gold: {
-        type: Number,
-        required: true, // Precio en la divisa específica, e.g., 12.99 para USD
-    },
     active: {
         type: Boolean,
         required: true,

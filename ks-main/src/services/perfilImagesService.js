@@ -1,8 +1,8 @@
 import axios from 'axios';
 import { getUpdatedUser } from './userService';
 
-const API_BASE_URL = 'http://localhost:3000/api/perfil-images';
-const API_BASE_IMAGE = 'http://localhost:3000';
+const API_BASE_URL = `${import.meta.env.VITE_API_URL}/api/perfil-images`;
+const API_BASE_IMAGE = `${import.meta.env.VITE_API_URL}`;
 
 const getUserId = () => {
     const user = JSON.parse(localStorage.getItem('user'));
@@ -32,7 +32,7 @@ const transformPerfilImagesArray = (PerfilImages) => {
 export const createPerfilImage = async (imageData) => {
     try {
         for (const [key, value] of imageData.entries()) {
-            console.log(`${key}:`, value);
+            // console.log(`${key}:`, value);
         }
         const response = await axios.post(`${API_BASE_URL}/`, imageData, {
             headers: {

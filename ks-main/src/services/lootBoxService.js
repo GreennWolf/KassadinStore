@@ -2,16 +2,16 @@ import axios from 'axios';
 
 // Configuración base de Axios
 const api = axios.create({
-    baseURL: 'http://localhost:3000/api',
+    baseURL: `${import.meta.env.VITE_API_URL}/api`,
     headers: {
         'Content-Type': 'application/json',
     },
 });
 
-const API_BASE_ITEMS = 'http://localhost:3000/items';
-const API_BASE_CHROMAS = 'http://localhost:3000/chromas';
-const API_BASE_IMAGE = 'http://localhost:3000/images/';
-const API_BASE_LOOTBOX = 'http://localhost:3000/lootbox';
+const API_BASE_ITEMS = `${import.meta.env.VITE_API_URL}/items`;
+const API_BASE_CHROMAS = `${import.meta.env.VITE_API_URL}/api/chromas`;
+const API_BASE_IMAGE = `${import.meta.env.VITE_API_URL}/images`;
+const API_BASE_LOOTBOX = `${import.meta.env.VITE_API_URL}/lootbox`;
 
 // Obtener ID del usuario autenticado
 const getUserId = () => {

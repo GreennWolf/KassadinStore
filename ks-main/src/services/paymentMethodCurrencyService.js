@@ -1,7 +1,7 @@
 // services/paymentMethodCurrencyService.js
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:3000/api/payment-method-currencies';
+const API_BASE_URL = `${import.meta.env.VITE_API_URL}/api/payment-method-currencies`;
 
 export const setPaymentMethodCurrencies = async (paymentMethodId, currencyIds, isRestricted = true) => {
     try {

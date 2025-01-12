@@ -22,11 +22,10 @@ export const ProductCard = ({
       setPrice(p ? p : 'N/A');
     }else{
       setPrice(p ? p: 'N/A');
-      console.log(p)
+      // console.log(p)
     }
   }, [product, isSeguro, selectedCurrency, isGoldStore, getPrice]);
 
-  useEffect(()=>{console.log(product)}, [product]);
 
   const getProductType = () => {
     if (product.type === 'chromas') return 'chroma';

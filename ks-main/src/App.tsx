@@ -9,13 +9,15 @@ import Perfil from "./pages/Perfil";
 import Eloboost from "./pages/Eloboost";
 import Checkout from "./pages/Checkout.jsx";
 import Admin from "./pages/Admin";
-import Unrankeds from "./pages/Unrankeds";
+import Unrankeds from "./pages/Unrankeds.jsx";
 import { CurrencyProvider } from './context/currencyContext.jsx'
 import {AuthModalProvider} from './context/authModalContext'
 import {DeviceProvider} from './context/deviceContext.jsx'
 import {NotificationsProvider} from './context/notificationContext.jsx'
 import Recompensas from "./pages/Recompensas.jsx";
 import TiendaGold from "./pages/TiendaGold.jsx";
+import {EmailVerification} from "./pages/EmailVerification.jsx";
+import Privacy from "./pages/Privacy.jsx";
 
 
 const queryClient = new QueryClient();
@@ -40,6 +42,8 @@ const App = () => (
                     <Route path="/tiendaOro/:category" element={<TiendaGold />} />
                     <Route path="/recompensas" element={<Recompensas />} />
                     <Route path="/unrankeds" element={<Unrankeds />} />
+                    <Route path="/verify/:token" element={<EmailVerification />} />
+                    <Route path="/privacy" element={<Privacy />} />
                   </Routes>
                 </TooltipProvider>
               </BrowserRouter>

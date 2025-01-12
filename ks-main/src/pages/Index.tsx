@@ -1,161 +1,146 @@
 import { TopNav } from "@/components/TopNav";
 import { HeroSection } from "@/components/sections/HeroSection";
-import { SolutionSection } from "@/components/sections/SolutionSection";
+import { KeyFeaturesSection } from "@/components/sections/KeyFeaturesSection";
 import { StepsSection } from "@/components/sections/StepsSection";
 import { ReviewsSection } from "@/components/sections/ReviewsSection";
+import { CTASection } from "@/components/sections/CTASection";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import {BuyStepsSection} from "@/components/sections/BuyStepsSection";
 
 const Index = () => {
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen text-foreground">
       <TopNav />
-      <main className="mx-auto">
+      
+      <main className="space-y-8">
         <HeroSection />
-        <StepsSection />
+        <KeyFeaturesSection />
+        <BuyStepsSection />
+        <CTASection />
         <ReviewsSection />
 
         {/* FAQ Section */}
-        <section className="py-16 bg-background">
+        <section className="py-16">
           <div className="max-w-3xl mx-auto px-4">
             <div className="text-center mb-12">
               <h2 className="text-sm uppercase tracking-wider text-muted-foreground">FAQ</h2>
-              <h3 className="text-4xl font-bold mt-2">Frequently Asked Questions</h3>
+              <h3 className="text-4xl font-bold mt-2">Preguntas Frecuentes</h3>
             </div>
 
             <Accordion type="single" collapsible className="w-full space-y-4">
               <AccordionItem value="item-1">
-                <AccordionTrigger>Is WeavePay a bank?</AccordionTrigger>
+                <AccordionTrigger>¿Cuánto tiempo tarda el envío de un pedido?</AccordionTrigger>
                 <AccordionContent>
-                  Content for this answer goes here.
+                  Una vez aceptada tu solicitud, se necesitan 7 días para que podamos enviar tu pedido. Desde ese momento, el envío se realizará tan pronto como un admin esté disponible.
                 </AccordionContent>
               </AccordionItem>
 
               <AccordionItem value="item-2">
-                <AccordionTrigger>Is WeavePay regulated?</AccordionTrigger>
+                <AccordionTrigger>¿Por qué es importante tener pocas solicitudes de amistad pendientes?</AccordionTrigger>
                 <AccordionContent>
-                  Content for this answer goes here.
+                  Recomendamos que tengas la menor cantidad posible de solicitudes pendientes en tu cuenta. Esto asegura que nuestras solicitudes te lleguen sin problemas, ya que solemos enviar varias solicitudes por cada pedido.
                 </AccordionContent>
               </AccordionItem>
 
               <AccordionItem value="item-3">
-                <AccordionTrigger>Can I open a WeavePay account?</AccordionTrigger>
+                <AccordionTrigger>¿Qué pasa si mi pedido se demora?</AccordionTrigger>
                 <AccordionContent>
-                  Content for this answer goes here.
+                  Aunque hacemos todo lo posible para que el proceso sea rápido, a veces pueden ocurrir demoras externas que están fuera de nuestro control. De igual modo siempre se mantiene informado a los clientes sobre esto.
                 </AccordionContent>
               </AccordionItem>
 
               <AccordionItem value="item-4">
-                <AccordionTrigger>How safe is my money in a WeavePay account?</AccordionTrigger>
+                <AccordionTrigger>¿Cómo es la seguridad?</AccordionTrigger>
                 <AccordionContent>
-                  Content for this answer goes here.
+                  En nuestra página manejamos diferentes tipos de métodos de entrega para priorizar la seguridad de tu cuenta dependiendo tus necesidades, los cuales venimos usando hace ya 2 años. Los puedes encontrar cuando vayas a hacer tu pedido en nuestro catálogo. Es importante aclarar que ninguna tienda externa es 100% segura, ya que este tipo de servicios no son oficiales. Aunque el riesgo es mínimo y trabajamos con diferentes métodos para que la mayoría de los pedidos se completen sin inconvenientes, siempre existe una pequeña posibilidad fuera de nuestro control. Si decides realizar una compra externa, considera estos factores y evita situaciones que puedan llamar la atención en tu cuenta.
                 </AccordionContent>
               </AccordionItem>
 
               <AccordionItem value="item-5">
-                <AccordionTrigger>Is my data safe with WeavePay?</AccordionTrigger>
+                <AccordionTrigger>¿Se realizan reembolsos?</AccordionTrigger>
                 <AccordionContent>
-                  Content for this answer goes here.
-                </AccordionContent>
-              </AccordionItem>
-
-              <AccordionItem value="item-6">
-                <AccordionTrigger>What type of industries does WeavePay work with?</AccordionTrigger>
-                <AccordionContent>
-                  Content for this answer goes here.
-                </AccordionContent>
-              </AccordionItem>
-
-              <AccordionItem value="item-7">
-                <AccordionTrigger>How much does it cost to set up and maintain a WeavePay account?</AccordionTrigger>
-                <AccordionContent>
-                  Content for this answer goes here.
-                </AccordionContent>
-              </AccordionItem>
-
-              <AccordionItem value="item-8">
-                <AccordionTrigger>What documents do I need to open a WeavePay account?</AccordionTrigger>
-                <AccordionContent>
-                  Content for this answer goes here.
+                  No hacemos reembolsos una vez que el pedido ha sido confirmado, procesado o entregado. Solo se procesan reembolsos en caso de que el item no pueda ser enviado (por ejemplo, si expiró el tiempo para regalarlo).
                 </AccordionContent>
               </AccordionItem>
             </Accordion>
           </div>
         </section>
+
+
       </main>
 
       {/* Footer */}
-      <footer className="bg-black text-white py-16 mt-auto">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+
+    <footer className="bg-black text-white py-16 mt-16">
+      <div className="max-w-6xl mx-auto px-4">
+        <div className="flex justify-center">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-x-64 gap-y-8">
             {/* Products Column */}
             <div>
-              <h3 className="font-bold mb-4">Products</h3>
-              <ul className="space-y-2">
-                <li><a href="#" className="text-gray-400 hover:text-white">Multicurrency account</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white">Debit cards</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white">Foreign exchange</a></li>
-              </ul>
-            </div>
-
-            {/* Industries Column */}
-            <div>
-              <h3 className="font-bold mb-4">Industries</h3>
-              <ul className="space-y-2">
-                <li><a href="#" className="text-gray-400 hover:text-white">Export/Import</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white">Manufacturing</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white">Marketing</a></li>
+              <h3 className="font-bold text-lg mb-6 text-center md:text-left">Productos</h3>
+              <ul className="space-y-3 text-center md:text-left">
+                <li><a href="/Tienda/presale" className="text-gray-400 hover:text-white transition-colors">Evento</a></li>
+                <li><a href="/Tienda/skins" className="text-gray-400 hover:text-white transition-colors">Skins</a></li>
+                <li><a href="/Tienda/loot" className="text-gray-400 hover:text-white transition-colors">Loot</a></li>
+                <li><a href="/Tienda/tft" className="text-gray-400 hover:text-white transition-colors">TFT</a></li>
+                <li><a href="/Tienda/unranked" className="text-gray-400 hover:text-white transition-colors">Unranked</a></li>
               </ul>
             </div>
 
             {/* Legal Column */}
             <div>
-              <h3 className="font-bold mb-4">Legal</h3>
-              <ul className="space-y-2">
-                <li><a href="#" className="text-gray-400 hover:text-white">Terms and conditions</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white">Privacy policy</a></li>
+              <h3 className="font-bold text-lg mb-6 text-center md:text-left">Legal</h3>
+              <ul className="space-y-3 text-center md:text-left">
+                <li><a href="#" className="text-gray-400 hover:text-white transition-colors">Terminos Y Condiciones</a></li>
+                <li><a href="/privacy" className="text-gray-400 hover:text-white transition-colors">Politica de Privacidad</a></li>
               </ul>
             </div>
 
             {/* Happy Clients Column */}
             <div>
-              <h3 className="font-bold mb-4">Happy Clients</h3>
-              <ul className="space-y-2">
-                <li><a href="#" className="text-gray-400 hover:text-white">Trustpilot</a></li>
-                <li><a href="#" className="text-gray-400 hover:text-white">Google reviews</a></li>
+              <h3 className="font-bold text-lg mb-6 text-center md:text-left">Clientes Satisfechos</h3>
+              <ul className="space-y-3 text-center md:text-left">
+                <li><a href="discord.com/invite/T9WJ2jGvAD" target="_blank" className="text-gray-400 hover:text-white transition-colors">Discord</a></li>
               </ul>
             </div>
           </div>
+        </div>
 
-          {/* Bottom Footer */}
-          <div className="mt-16 pt-8 border-t border-gray-800">
-            <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
-              <div className="text-sm text-gray-400">
-                © Kassadin Store
-              </div>
-              <div className="flex space-x-4">
-                <a href="#" className="text-gray-400 hover:text-white">
-                  <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path fillRule="evenodd" d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" clipRule="evenodd" />
-                  </svg>
-                </a>
-                <a href="#" className="text-gray-400 hover:text-white">
-                  <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path fillRule="evenodd" d="M12.315 2c2.43 0 2.784.013 3.808.06 1.064.049 1.791.218 2.427.465a4.902 4.902 0 011.772 1.153 4.902 4.902 0 011.153 1.772c.247.636.416 1.363.465 2.427.048 1.067.06 1.407.06 4.123v.08c0 2.643-.012 2.987-.06 4.043-.049 1.064-.218 1.791-.465 2.427a4.902 4.902 0 01-1.153 1.772 4.902 4.902 0 01-1.772 1.153c-.636.247-1.363.416-2.427.465-1.067.048-1.407.06-4.123.06h-.08c-2.643 0-2.987-.012-4.043-.06-1.064-.049-1.791-.218-2.427-.465a4.902 4.902 0 01-1.153-1.772 4.902 4.902 0 01-1.153-1.772c-.247-.636-.416-1.363-.465-2.427-.047-1.024-.06-1.379-.06-3.808v-.63c0-2.43.013-2.784.06-3.808.049-1.064.218-1.791.465-2.427a4.902 4.902 0 011.153-1.772A4.902 4.902 0 015.45 2.525c.636-.247 1.363-.416 2.427-.465C8.901 2.013 9.256 2 11.685 2h.63zm-.081 1.802h-.468c-2.456 0-2.784.011-3.807.058-.975.045-1.504.207-1.857.344-.467.182-.8.398-1.15.748-.35.35-.566.683-.748 1.15-.137.353-.3.882-.344 1.857-.047 1.023-.058 1.351-.058 3.807v.468c0 2.456.011 2.784.058 3.807.045.975.207 1.504.344 1.857.182.466.399.8.748 1.15.35.35.683.566 1.15.748.353.137.882.3 1.857.344 1.054.048 1.37.058 4.041.058h.08c2.597 0 2.917-.01 3.96-.058.976-.045 1.505-.207 1.858-.344.466-.182.8-.398 1.15-.748.35-.35.566-.683.748-1.15.137-.353.3-.882.344-1.857.048-1.055.058-1.37.058-4.041v-.08c0-2.597-.01-2.917-.058-3.96-.045-.976-.207-1.505-.344-1.858a3.097 3.097 0 00-.748-1.15 3.098 3.098 0 00-1.15-.748c-.353-.137-.882-.3-1.857-.344-1.023-.047-1.351-.058-3.807-.058zM12 6.865a5.135 5.135 0 110 10.27 5.135 5.135 0 010-10.27zm0 1.802a3.333 3.333 0 100 6.666 3.333 3.333 0 000-6.666zm5.338-3.205a1.2 1.2 0 110 2.4 1.2 1.2 0 010-2.4z" clipRule="evenodd" />
-                  </svg>
-                </a>
-                <a href="#" className="text-gray-400 hover:text-white">
-                  <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                    <path fillRule="evenodd" d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" clipRule="evenodd" />
-                  </svg>
-                </a>
-              </div>
-            </div>
-            <div className="mt-4 text-sm text-gray-400 text-center md:text-left">
-              Kassadin Store no cuenta con el respaldo ni está afiliada de ninguna manera a Riot Games y no refleja las opiniones ni los puntos de vista de ninguna persona involucrada oficialmente en la producción o administración de League of Legends. Todas las marcas comerciales y logotipos pertenecen a sus respectivos propietarios. Todo el contenido artístico enviado sigue siendo propiedad intelectual de su propietario original.
+        {/* Bottom Footer */}
+        <div className="mt-16 pt-8 border-t border-gray-800">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+            <div className="text-sm text-gray-400">© Kassadin Store</div>
+            <div className="flex gap-6">
+              <a href="https://www.facebook.com/profile.php?id=61553397030375"  target="_blank" className="text-gray-400 hover:text-white">
+                <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" />
+                </svg>
+              </a>
+              <a href="https://www.instagram.com/kassadin.store/" target="_blank" className="text-gray-400 hover:text-white">
+                <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2c2.717 0 3.056.01 4.122.06 1.065.05 1.79.217 2.428.465.66.254 1.216.598 1.772 1.153a4.908 4.908 0 0 1 1.153 1.772c.247.637.415 1.363.465 2.428.047 1.066.06 1.405.06 4.122 0 2.717-.01 3.056-.06 4.122-.05 1.065-.218 1.79-.465 2.428a4.883 4.883 0 0 1-1.153 1.772 4.915 4.915 0 0 1-1.772 1.153c-.637.247-1.363.415-2.428.465-1.066.047-1.405.06-4.122.06-2.717 0-3.056-.01-4.122-.06-1.065-.05-1.79-.218-2.428-.465a4.89 4.89 0 0 1-1.772-1.153 4.904 4.904 0 0 1-1.153-1.772c-.248-.637-.415-1.363-.465-2.428C2.013 15.056 2 14.717 2 12c0-2.717.01-3.056.06-4.122.05-1.066.217-1.79.465-2.428a4.88 4.88 0 0 1 1.153-1.772A4.897 4.897 0 0 1 5.45 2.525c.638-.248 1.362-.415 2.428-.465C8.944 2.013 9.283 2 12 2zm0 5a5 5 0 1 0 0 10 5 5 0 0 0 0-10zm6.5-.25a1.25 1.25 0 1 0-2.5 0 1.25 1.25 0 0 0 2.5 0zM12 8.5a3.5 3.5 0 1 1-3.5 3.5 3.5 3.5 0 0 1 3.5-3.5z"/>
+                </svg>
+              </a>
             </div>
           </div>
+          
+          <div className="mt-8 text-sm text-gray-400 text-center max-w-4xl mx-auto">
+            Kassadin Store no cuenta con el respaldo ni está afiliada de ninguna manera a Riot Games y no refleja las opiniones ni los puntos de vista de ninguna persona involucrada oficialmente en la producción o administración de League of Legends. Todas las marcas comerciales y logotipos pertenecen a sus respectivos propietarios. Todo el contenido artístico enviado sigue siendo propiedad intelectual de su propietario original.
+          </div>
+          {/* <div className="text-center text-gray-400 text-xs md:text-sm">
+          <span>Este sitio web fue desarrollado y diseñado por </span>
+          <a 
+            href="https://ltechcompanys.com/" 
+            className="text-white hover:text-gray-300 transition-colors"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Ltech Developer Service
+          </a>
+        </div> */}
         </div>
-      </footer>
+      </div>
+    </footer>
     </div>
   );
 };

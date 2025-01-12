@@ -3,8 +3,8 @@
 import axios from 'axios';
 
 // Define la URL base de la API
-const API_BASE_URL = 'http://localhost:3000/api';
-const API_BASE_IMAGE = 'http://localhost:3000/images/';
+const API_BASE_URL = `${import.meta.env.VITE_API_URL}/api`;
+const API_BASE_IMAGE = `${import.meta.env.VITE_API_URL}/images/`;
 
 // Función auxiliar para transformar las URLs de las imágenes
 const transformImageUrls = (skin) => {
@@ -132,14 +132,24 @@ export const deleteChampion = async (id) => {
 // Obtener todas las skins
 export const getAllSkins = async (params) => {
     try {
-        const { page = 1, limit = 20, search = '', subcategory = 'all', showAll, orderByNew = false } = params;
+        const { 
+            page = 1, 
+            limit = 20, 
+            search = '', 
+            subcategory = 'all', 
+            showAll, 
+            orderByNew = false,
+            reward = false // Nuevo parámetro
+        } = params;
+        
         const queryParams = new URLSearchParams({
             page: page.toString(),
             limit: limit.toString(),
             search,
             subcategory,
             showAll,
-            orderByNew: orderByNew.toString()
+            orderByNew: orderByNew.toString(),
+            reward: reward.toString() // Añadir reward a los parámetros
         });
 
         const response = await axios.get(`${API_BASE_URL}/skins?${queryParams}`);
@@ -202,7 +212,8 @@ export const createSkin = async (skinData) => {
         
         // Agregar ID del campeón
         formData.append('champion', skinData.champion);
-
+        
+        formData.append('reward', skinData.reward);
         // Agregar la imagen
         if (skinData.src instanceof File) {
             formData.append('skinImage', skinData.src);
@@ -247,6 +258,7 @@ export const updateSkin = async (id, skinData) => {
         
         // Agregar ID del campeón
         formData.append('champion', skinData.champion);
+        formData.append('reward', skinData.reward);
 
         // Agregar la imagen si existe
         if (skinData.src instanceof File) {

@@ -43,10 +43,11 @@ export const StoreFilters = ({
             <SelectValue placeholder="Select order" />
           </SelectTrigger>
           <SelectContent className="bg-black border border-border">
-            <SelectItem value="price-asc">Price: Low to High</SelectItem>
-            <SelectItem value="price-desc">Price: High to Low</SelectItem>
-            <SelectItem value="name-asc">Name: A to Z</SelectItem>
-            <SelectItem value="name-desc">Name: Z to A</SelectItem>
+            <SelectItem value="new-desc">Nuevos Primero</SelectItem>
+            <SelectItem value="name-asc">Nombre: de A a Z</SelectItem>
+            <SelectItem value="name-desc">Nombre: de Z a A</SelectItem>
+            <SelectItem value="price-asc">Precio: Mas Bajo a Mas Alto</SelectItem>
+            <SelectItem value="price-desc">Precio: Mas Alto a Mas Bajo</SelectItem>
           </SelectContent>
         </Select>
       </div>

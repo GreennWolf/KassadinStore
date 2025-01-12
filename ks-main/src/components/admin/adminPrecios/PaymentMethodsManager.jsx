@@ -10,6 +10,14 @@ import { CreatePaymentMethodModal } from './paymentMethod/CreatePaymentMethodMod
 import { EditPaymentMethodModal } from './paymentMethod/EditPaymentMethodModal';
 import { toast } from "react-toastify";
 import { getAllCurrencies } from '../../../services/currencyService';
+import { MoreVertical } from "lucide-react";
+import {
+
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { 
     getAllPaymentMethods, 
     createPaymentMethod, 
@@ -92,8 +100,7 @@ export function PaymentMethodsManager() {
         });
     };
 
-    const handleEdit = () => {
-        const methodToEdit = contextMenu.method;
+    const handleEdit = (methodToEdit) => {
         const currencyData = methodCurrencies[methodToEdit._id] || {
             currencies: [],
             isRestricted: false
@@ -317,6 +324,7 @@ export function PaymentMethodsManager() {
                     <TableHead className="text-center">Detalles</TableHead>
                     <TableHead className="text-center">Divisas Disponibles</TableHead>
                     <TableHead className="text-center">Activo</TableHead>
+                    <TableHead className="text-center">Acciones</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -334,7 +342,7 @@ export function PaymentMethodsManager() {
                             </div>
                         ))}
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="text-center">
                         {methodCurrencies[method._id] ? (
                             methodCurrencies[method._id].isRestricted ? (
                             methodCurrencies[method._id].currencies?.map(currency => (
@@ -359,6 +367,37 @@ export function PaymentMethodsManager() {
                         <TableCell className="text-center">
                         {method.active ? 'SI' : 'NO'}
                         </TableCell>
+                        <TableCell className="text-center">
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" className="h-8 w-8 p-0">
+                                            <MoreVertical className="h-4 w-4" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent className="bg-black" align="end">
+                                        <DropdownMenuItem
+                                            onClick={() => {
+                                                handleEdit(method);
+                                                setIsEditModalOpen(true);
+                                            }}
+                                        >
+                                            Editar
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem
+                                            className="text-red-600"
+                                            onClick={() => {
+                                                if(!method.active){
+                                                    handleActiveMethod(method._id);
+                                                }else{
+                                                    handleDeleteMethod(method._id)
+                                                }
+                                            }}
+                                        >
+                                            {method.active ? 'Desactivar' : 'Activar'}
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            </TableCell>
                     </TableRow>
                     ))}
                 </TableBody>

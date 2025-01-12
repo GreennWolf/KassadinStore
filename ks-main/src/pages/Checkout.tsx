@@ -24,11 +24,19 @@ import {useStore} from '../context/StoreContext.jsx'
 
 // Form validation schema
 const formSchema = z.object({
-  riotName: z.string().min(3, "Riot name must be at least 3 characters"),
-  discordName: z.string().min(3, "Discord name must be at least 3 characters"),
-  server: z.string().min(1, "Please select a server"),
-  paymentMethod: z.string().min(1, "Please select a payment method"),
-  currency: z.string().min(1, "Please select a currency"),
+  riotName: z.string()
+  .min(3, "El Riot Name debe tener al menos 3 caracteres")
+  .refine((value) => {
+    if (!value.includes('#')) return false;
+    const [name, tag] = value.split('#');
+    if (!name || name.trim() === '') return false;
+    if (!tag || tag.length < 3 || tag.length > 5) return false;
+    return true;
+  }, { message: "Tu Riot Name debe incluir un # seguido de 3 a 5 caracteres detras" }),
+  discordName: z.string().min(3, "Tu Nombre de discord debe tener al menos 3 caracteres"),
+  server: z.string().min(1, "Por favor selecciona un servidor"),
+  paymentMethod: z.string().min(1, "Por favor selecciona un metodo de pago"),
+  currency: z.string().min(1, "Por favor selecciona una divisa"),
   couponCode: z.string().optional()
 })
 
@@ -176,7 +184,7 @@ export default function Checkout() {
   const handleFileChange = (e) => setReceiptFile(e.target.files[0])
 
   const onSubmit = async (values) => {
-    console.log("Form submitted with values:", values);
+    // console.log("Form submitted with values:", values);
     setIsSubmitting(true)
     try {
 
@@ -191,7 +199,7 @@ export default function Checkout() {
         file:receiptFile
       }
 
-      console.log(data)
+      // console.log(data)
 
       await createPurchase(
         data
@@ -232,10 +240,10 @@ export default function Checkout() {
         <div className="space-y-6">
           <div className="space-y-2 text-center">
             <h1 className="text-4xl font-bold tracking-tight mb-4">
-              {step === 1 ? "Your Cart" : 
-              step === 2 ? "Account Details" : 
-              step === 3 ? "Payment Details" : 
-              "Order Confirmation"}
+              {step === 1 ? "Tu Carrito" : 
+              step === 2 ? "Detalles de Cuenta" : 
+              step === 3 ? "Detalles del Pago" : 
+              "Confirmación de Compra"}
             </h1>
             <div className="flex justify-center space-x-4 mb-8">
               {[1, 2, 3, 4].map(i => (
@@ -253,10 +261,26 @@ export default function Checkout() {
                 {cartItems.map(item => (
                   <div key={item._id} className="flex items-center justify-between p-4 bg-secondary/10 rounded-lg">
                     <div className="flex items-center space-x-4">
-                      <img src={item.srcLocal} alt="" className="h-20 w-20 rounded-md object-cover" />
+                      <img src={item.srcLocal || item.srcWeb} alt="" className="h-20 w-20 rounded-md object-cover" />
                       <div>
-                        <p className="font-medium">{item.NombreSkin || item.name}</p>
-                        <p className="text-sm text-muted-foreground">Quantity: {item.quantity}</p>
+                        {item.isUnranked ? (
+                          <div className="space-y-1">
+                            <p className="font-medium">Cuenta {item.region}</p>
+                            <div className="text-sm text-muted-foreground space-y-0.5">
+                              <p>Nivel: {item.nivel}</p>
+                              <span className={`text-xs ${item.handUpgrade ? 'text-emerald-500' : 'text-red-500'}`}>
+                                {item.handUpgrade ? 'Cuenta Safe' : 'Cuenta Unsafe'}
+                              </span>
+                            </div>
+                            <p className="text-sm">Cantidad: {item.quantity}</p>
+                          </div>
+                        ) : (
+                          <>
+                            <p className="font-medium">{item.NombreSkin || item.name}</p>
+                            <p className="text-sm text-muted-foreground">Cantidad: {item.quantity}</p>
+                            {item.isSkin && <p className="text-xs text-muted-foreground">Skin</p>}
+                          </>
+                        )}
                       </div>
                     </div>
                     <p className="font-medium">
@@ -331,79 +355,94 @@ export default function Checkout() {
                   onClick={handleNext}
                   disabled={cartItems.length === 0}
                 >
-                  Continue to Account Details
+                  Continuar a detalles de la cuenta
                 </Button>
               </div>
             )}
     
             {step === 2 && (
-              <Form {...form} >
-                <form  className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="riotName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Riot Name</FormLabel>
+              <Form {...form}>
+              <form className="space-y-4">
+                {/* Riot Name Field */}
+                <FormField
+                  control={form.control}
+                  name="riotName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Riot Name</FormLabel>
+                      <FormControl>
+                        <Input required placeholder="Enter your Riot name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+            
+                {/* Discord Name Field */}
+                <FormField
+                  control={form.control}
+                  name="discordName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Discord Name</FormLabel>
+                      <FormControl>
+                        <Input required placeholder="Enter your Discord name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+            
+                {/* Server Selection */}
+                <FormField
+                  control={form.control}
+                  name="server"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Server</FormLabel>
+                      <Select
+                        {...field}
+                        required
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                        aria-invalid={form.formState.errors.server ? "true" : "false"}
+                      >
                         <FormControl>
-                          <Input required  placeholder="Enter your Riot name" {...field} />
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select your server" />
+                          </SelectTrigger>
                         </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-    
-                  <FormField
-                    control={form.control}
-                    name="discordName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Discord Name</FormLabel>
-                        <FormControl>
-                          <Input required  placeholder="Enter your Discord name" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-    
-                  <FormField
-                    control={form.control}
-                    name="server"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Server</FormLabel>
-                        <Select
-                          {...field}
-                          required
-                          onValueChange={field.onChange}
-                          defaultValue={field.value}
-                          aria-invalid={form.formState.errors.server ? "true" : "false"}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select your server" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem className="bg-black text-white" value="LAS">LAS</SelectItem>
-                            <SelectItem className="bg-black text-white" value="LAN">LAN</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-    
-                  <div className="flex justify-between pt-4">
-                    <Button type="button" variant="outline" onClick={handleBack}>
-                      Back
-                    </Button>
-                    <Button onClick={handleNext}>Continue to Payment</Button>
-                  </div>
-                </form>
-              </Form>
+                        <SelectContent>
+                          <SelectItem className="bg-black text-white" value="LAS">LAS</SelectItem>
+                          <SelectItem className="bg-black text-white" value="LAN">LAN</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+            
+                {/* Navigation Buttons */}
+                <div className="flex justify-between pt-4">
+                  <Button type="button" variant="outline" onClick={handleBack}>
+                    Back
+                  </Button>
+                  <Button
+                    onClick={async (e) => {
+                      // Trigger validation for the form
+                      const isValid = await form.trigger(["riotName", "discordName", "server"]);
+                      if (isValid) {
+                        handleNext(); // Advance step if the form is valid
+                      }else{
+                        e.preventDefault()
+                      }
+                    }}
+                  >
+                    Continuar al pago
+                  </Button>
+                </div>
+              </form>
+            </Form>
             )}
     
             {step === 3 && (
@@ -413,7 +452,7 @@ export default function Checkout() {
                   name="currency"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Currency</FormLabel>
+                      <FormLabel>Divisa</FormLabel>
                       <Select 
                         onValueChange={(value) => {
                           field.onChange(value)
@@ -429,6 +468,7 @@ export default function Checkout() {
                         <SelectContent>
                           {currencies.map(currency => (
                             <SelectItem 
+                              className="bg-black text-white"
                               key={currency._id} 
                               value={currency._id}
                             >
@@ -447,8 +487,8 @@ export default function Checkout() {
                   name="paymentMethod"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Payment Method</FormLabel>
-                      <Select 
+                      <FormLabel>Metodo de Pago</FormLabel>
+                      <Select
                         onValueChange={field.onChange} 
                         defaultValue={field.value}
                         disabled={!selectedCurrency}
@@ -460,9 +500,10 @@ export default function Checkout() {
                         </FormControl>
                         <SelectContent>
                           {getAvailablePaymentMethods().map(method => {
-                            console.log(method)
+                            // console.log(method)
                               return (
                                 <SelectItem 
+                                  className="bg-black texct-white"
                                   key={method._id} 
                                   value={method._id}
                                 >
@@ -482,91 +523,136 @@ export default function Checkout() {
                     <Button type="button" variant="outline" onClick={handleBack}>
                       Back
                     </Button>
-                    <Button 
-                      onClick={handleNext}
-                      disabled={isSubmitting}
-                    >
-                      {isSubmitting ? "Processing..." : "Continue to Confirmation"}
-                    </Button>
+                    <Button
+                    onClick={async (e) => {
+                      // Trigger validation for the form
+                      const isValid = await form.trigger(["paymentMethod"]);
+                      if (isValid && selectedCurrency) {
+                        handleNext(); // Advance step if the form is valid
+                      }else{
+                        e.preventDefault()
+                      }
+                    }}
+                  >
+                    Continuar a la confirmacion
+                  </Button>
                   </div>
                 </div>
               </div>
             )}
     
             {step === 4 && (
-              <Form {...form }>
+              <Form {...form}>
                 <form onSubmit={(e)=>{
                   e.preventDefault()
                   const values = {
-                    riotName:form.getValues().riotName,
-                    discordName:form.getValues().discordName,
-                    server:form.getValues().server,
-                    paymentMethod:form.getValues().paymentMethod,
+                    riotName: form.getValues().riotName,
+                    discordName: form.getValues().discordName,
+                    server: form.getValues().server,
+                    paymentMethod: form.getValues().paymentMethod,
                   }
                   onSubmit(values)
                 }}>
                   <div className="space-y-6">
-                  <div className="space-y-4">
-                    <h2 className="text-xl font-semibold">Order Summary</h2>
-                    <div className="bg-secondary/10 p-4 rounded-lg space-y-2">
-                      <p>Riot Name: {form.getValues().riotName}</p>
-                      <p>Discord Name: {form.getValues().discordName}</p>
-                      <p>Server: {form.getValues().server}</p>
-                      <p>Payment Method: {paymentMethods.find(p => p._id === form.getValues().paymentMethod).method}</p>
-                      
-                      {/* Display cart items */}
-                      <div className="mt-4 pt-4 border-t">
-                        <h3 className="font-medium mb-2">Items</h3>
-                        {cartItems.map(item => (
-                          <div key={item.id} className="flex justify-between py-1">
-                            <span>{item.NombreSkin || item.name} x {item.quantity}</span>
-                            <span>{selectedCurrency?.symbol}{formatPrice(unformatPrice(item.priceConverted) * item.quantity)}</span>
+                    <div className="space-y-4">
+                      <h2 className="text-xl font-semibold">Resumen del Pedido</h2>
+                      <div className="bg-secondary/10 p-4 rounded-lg space-y-2">
+                        {/* Sección de detalles del método de pago */}
+                        <div className="mb-6 border-b border-border/20 pb-4">
+                          <h3 className="text-lg font-semibold mb-3">Detalles de Pago</h3>
+                          <div className="flex gap-2"><p className="font-bold">Metodo de Pago: </p><p>{paymentMethods.find(p => p._id === form.getValues().paymentMethod).method}</p></div>
+                          {paymentMethods.find(p => p._id === form.getValues().paymentMethod)?.details.map((detail, index) => (
+                            <div key={index} className="mb-3 last:mb-0 flex gap-2">
+                              <p className="font-medium text-primary">{detail.title}</p>
+                              <p className="text-medium text-green-600 whitespace-pre-line">
+                                {detail.description}
+                              </p>
+                            </div>
+                          ))}
+                          <div className="mt-4 p-3 bg-yellow-500/10 rounded-md">
+                            <p className="text-sm text-yellow-500">
+                              Por favor, asegúrate de realizar el pago exacto y seguir todas las instrucciones antes de subir el comprobante.
+                            </p>
                           </div>
-                        ))}
-                      </div>
-                      <div className="mt-4 pt-4 border-t">
-                        <h2 className="text-xl font-bold mb-2">Cargar Comprobante</h2>
-                        <input 
-                          type="file" 
-                          onChange={handleFileChange}
-                          accept="image/*,.pdf"
-                          className="mb-4"
-                        />
+                        </div>
+
+                        <p>Riot Name: {form.getValues().riotName}</p>
+                        <p>Discord Name: {form.getValues().discordName}</p>
+                        <p>Server: {form.getValues().server}</p>
+                        
+                        {/* Display cart items */}
+                        <div className="mt-4 pt-4 border-t">
+                          <h3 className="font-medium mb-2">Items</h3>
+                          {cartItems.map(item => (
+                            <div key={item.id} className="flex justify-between py-2 border-b border-border/20">
+                              {item.isUnranked ? (
+                                <div className="flex-1">
+                                  <div className="flex justify-between mb-1">
+                                    <span className="font-medium">Cuenta {item.region}</span>
+                                    <span>{selectedCurrency?.symbol}{formatPrice(unformatPrice(item.priceConverted) * item.quantity)}</span>
+                                  </div>
+                                  <div className="text-sm text-muted-foreground space-y-0.5">
+                                    <p>Nivel {item.nivel} • <span className={` ${item.handUpgrade ? 'text-emerald-500' : 'text-red-500'}`}>
+                                      {item.handUpgrade ? 'Safe' : 'Unsafe'}
+                                    </span></p>
+                                    {item.quantity > 1 && <p>x{item.quantity}</p>}
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className="flex justify-between w-full">
+                                  <span>{item.NombreSkin || item.name} x {item.quantity}</span>
+                                  <span>{selectedCurrency?.symbol}{formatPrice(unformatPrice(item.priceConverted) * item.quantity)}</span>
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+
+                        <div className="mt-4 pt-4 border-t">
+                          <h2 className="text-xl font-bold mb-2">Cargar Comprobante</h2>
+                          <p className="text-sm text-muted-foreground mb-2">
+                            Por favor, sube una captura o foto del comprobante de pago
+                          </p>
+                          <input 
+                            type="file" 
+                            onChange={handleFileChange}
+                            accept="image/*,.pdf"
+                            className="mb-4"
+                          />
+                        </div>
+
+                        {/* Display total */}
+                        <div className="mt-4 pt-4 border-t">
+                          <div className="flex justify-between font-bold">
+                            <span>Total</span>
+                            <span>{selectedCurrency?.symbol}{calculateTotal()}</span>
+                          </div>
+                        </div>
+
+                        {/* Display coupon if applied */}
+                        {couponData && (
+                          <div className="mt-2 text-sm text-muted-foreground">
+                            Cupón aplicado: {couponData.code} 
+                            ({couponData.type === 'percent' ? 
+                              `${couponData.value}% descuento` : 
+                              `${selectedCurrency?.symbol}${couponData.value} descuento`})
+                          </div>
+                        )}
                       </div>
 
-      
-                      {/* Display total */}
-                      <div className="mt-4 pt-4 border-t">
-                        <div className="flex justify-between font-bold">
-                          <span>Total</span>
-                          <span>{selectedCurrency?.symbol}{calculateTotal()}</span>
-                        </div>
+                      <div className="flex justify-between">
+                        <Button variant="outline" onClick={handleBack}>
+                          Atrás
+                        </Button>
+                        <Button 
+                          type="submit"
+                          disabled={!receiptFile || isSubmitting}
+                        >
+                          {isSubmitting ? "Procesando..." : "Completar Compra"}
+                        </Button>
                       </div>
-      
-                      {/* Display coupon if applied */}
-                      {couponData && (
-                        <div className="mt-2 text-sm text-muted-foreground">
-                          Coupon applied: {couponData.code} 
-                          ({couponData.type === 'percent' ? 
-                            `${couponData.value}% off` : 
-                            `${selectedCurrency?.symbol}${couponData.value} off`})
-                        </div>
-                      )}
-                    </div>
-      
-                    <div className="flex justify-between">
-                      <Button variant="outline" onClick={handleBack}>
-                        Back
-                      </Button>
-                      <Button 
-                        type="submit"
-                        disabled={!receiptFile || isSubmitting}
-                      >
-                        {isSubmitting ? "Processing..." : "Complete Purchase"}
-                      </Button>
                     </div>
                   </div>
-                </div>
                 </form>                
               </Form>
             )}

@@ -37,7 +37,7 @@ const upload = multer({
 
 async function createItem(req, res, next) {
     try {
-        const { name, type, priceRP, srcWeb } = req.body;
+        const { name, type, priceRP, srcWeb ,skin,reward} = req.body;
 
         if (!name || !type || !priceRP) {
             throw new CustomError('Faltan campos requeridos', 400, ['name', 'type', 'priceRP']);
@@ -53,7 +53,8 @@ async function createItem(req, res, next) {
             type,
             priceRP,
             srcWeb: srcWeb?.trim() || '',
-            ...(type === 'chromas' && req.body.skin && { skin: req.body.skin }),
+            reward,
+            ...(type === 'chromas' && skin && { skin: skin }),
             ...(req.file && { srcLocal: req.file.filename })
         };
 
@@ -73,7 +74,7 @@ async function createItem(req, res, next) {
 async function editItem(req, res, next) {
     try {
         const { id } = req.params;
-        const { name, type, priceRP, srcWeb, skin } = req.body;
+        const { name, type, priceRP, srcWeb, skin,reward } = req.body;
 
         const validTypes = ['loot', 'icon', 'chromas', 'presale', 'tft', 'bundle'];
         if (!validTypes.includes(type)) {
@@ -85,7 +86,8 @@ async function editItem(req, res, next) {
             type,
             priceRP,
             srcWeb: srcWeb?.trim() || '',
-            skin: type === 'chromas' && skin ? skin : null
+            skin: type === 'chromas' && skin ? skin : null,
+            reward,
         };
 
         if (req.file) {
@@ -165,12 +167,18 @@ async function getAllItems(req, res, next) {
         const type = req.query.type;
         const showAll = req.query.showAll === 'true'; // Nuevo parámetro
         const skip = (page - 1) * limit;
+        const reward = req.query.reward === 'true'; // Nuevo parámetro
 
         let query = {};
         
         // Solo aplicar filtro de activos si no queremos ver todos
         if (!showAll) {
             query.active = true;
+        }
+
+        // Aplicar filtro de reward si está especificado
+        if (reward) {
+            query.reward = true;
         }
 
         // Añadir búsqueda si existe

@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 // Define la URL base de la API
-const API_BASE_URL = 'http://localhost:3000/api'; // Cambia el puerto si es necesario
+const API_BASE_URL = `${import.meta.env.VITE_API_URL}/api`; // Cambia el puerto si es necesario
 
 // Crear un nuevo método de pago
 export const createPaymentMethod = async (method, details) => {

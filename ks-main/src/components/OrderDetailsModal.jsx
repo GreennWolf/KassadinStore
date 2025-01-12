@@ -16,12 +16,17 @@ import {
   getAllStatus, 
   markStatusAsViewed, 
   updatePurchase,
-  confirmPurchaseStatus 
+  confirmPurchaseStatus ,
+  deletePurchase
+  
 } from '../services/purcharseService';
 import { getSkinById } from '../services/champsService';
 import { getItemById } from '../services/itemService';
 import { getCurrencyById } from '../services/currencyService';
 import { getCuponById } from '../services/cuponServices';
+import { getUnrankedById } from '../services/unrankedService';
+import AccountDetailsModal from './AccountDetailsModal';
+import { FaTrash } from 'react-icons/fa';
 
 const OrderDetailsModal = ({ isOpen, onClose, order, onOrderUpdated, statuses, admin }) => {
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
@@ -32,9 +37,13 @@ const OrderDetailsModal = ({ isOpen, onClose, order, onOrderUpdated, statuses, a
   const [currency, setCurrency] = useState({});
   const [cupon, setCupon] = useState({});
   const { updateNotifications } = useNotifications();
+  const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
+  const [selectedAccount, setSelectedAccount] = useState(null);
+  const [selectedItemId, setSelectedItemId] = useState(null);
 
   useEffect(() => {
     setCurrentOrder(order);
+    console.log(order)
     if (isOpen && order) {
       if (!admin) {
         handleMarkAsViewed();
@@ -58,6 +67,37 @@ const OrderDetailsModal = ({ isOpen, onClose, order, onOrderUpdated, statuses, a
       toast.error('Error al marcar como visto');
     }
   };
+
+  const handleAccountUpdate = async (updatedAccount) => {
+    // Actualizar el selectedAccount
+    setSelectedAccount(updatedAccount);
+    
+    // Actualizar el itemDetails
+    const itemKey = `${selectedItemId}-${currentOrder.items.findIndex(
+        item => (item.itemId._id || item.itemId) === selectedItemId
+    )}`;
+    
+    setItemDetails(prev => ({
+        ...prev,
+        [itemKey]: {
+            ...prev[itemKey],
+            email: updatedAccount.email,
+            password: updatedAccount.password
+        }
+    }));
+};
+
+const handleDelete = async (id) => {
+  try {
+      const response = await deletePurchase(id);
+      toast.success('Compra Eliminada exitosamente');
+      onClose()
+  } catch (error) {
+      console.error('Error Eliminar la compra:', error);
+      toast.error('Error eliminar la compra');
+  }
+};
+
 
   const handleConfirmStatus = async () => {
     try {
@@ -119,46 +159,50 @@ const OrderDetailsModal = ({ isOpen, onClose, order, onOrderUpdated, statuses, a
     if (!currentOrder?.items) return;
     
     try {
-      const itemPromises = currentOrder.items.map(async item => {
-        const itemId = item.itemId._id || item.itemId;
-        let itemData;
-        
-        if (item.itemType === 'Skin') {
-          itemData = await getSkinById(itemId);
-        } else {
-          itemData = await getItemById(itemId);
-          if (itemData.type === 'chromas') {
-            try {
-              const skinId = item.itemId.skin?._id || item.itemId.skin || itemData.skin;
-              if (skinId) {
-                const skinData = await getSkinById(skinId);
-                itemData = { ...itemData, skinData };
-              }
-            } catch (error) {
-              console.error('Error fetching chroma skin:', error);
+        const itemPromises = currentOrder.items.map(async item => {
+            const itemId = item.itemId._id || item.itemId;
+            let itemData;
+            
+            if (item.itemType === 'Unranked') {
+              itemData = await getUnrankedById(itemId);
+              itemData = { ...itemData, accountData: item.accountData };
+            } else if (item.itemType === 'Skin') {
+                itemData = await getSkinById(itemId);
+            } else {
+                itemData = await getItemById(itemId);
+                if (itemData.type === 'chromas') {
+                    try {
+                        const skinId = item.itemId.skin?._id || item.itemId.skin || itemData.skin;
+                        if (skinId) {
+                            const skinData = await getSkinById(skinId);
+                            itemData = { ...itemData, skinData };
+                        }
+                    } catch (error) {
+                        console.error('Error fetching chroma skin:', error);
+                    }
+                }
             }
-          }
-        }
-        return itemData;
-      });
+            return itemData;
+        });
 
-      const itemsData = await Promise.all(itemPromises);
-      const itemsMap = {};
-      
-      currentOrder.items.forEach((item, index) => {
-        const itemId = item.itemId._id || item.itemId;
-        itemsMap[`${itemId}-${index}`] = {
-          ...itemsData[index],
-          isSkin: item.itemType === 'Skin'
-        };
-      });
-      
-      setItemDetails(itemsMap);
+        const itemsData = await Promise.all(itemPromises);
+        const itemsMap = {};
+        
+        currentOrder.items.forEach((item, index) => {
+            const itemId = item.itemId._id || item.itemId;
+            itemsMap[`${itemId}-${index}`] = {
+                ...itemsData[index],
+                isUnranked: item.itemType === 'Unranked',
+                isSkin: item.itemType === 'Skin'
+            };
+        });
+        
+        setItemDetails(itemsMap);
     } catch (error) {
-      console.error('Error fetching item details:', error);
-      toast.error('Error al cargar los detalles de los items');
+        console.error('Error fetching item details:', error);
+        toast.error('Error al cargar los detalles de los items');
     }
-  };
+};
 
   const fetchStatuses = async () => {
     if (!statuses) {
@@ -347,67 +391,130 @@ const OrderDetailsModal = ({ isOpen, onClose, order, onOrderUpdated, statuses, a
     );
 };
 
-  const renderItem = (item, index) => {
-    const itemId = item.itemId._id || item.itemId;
-    const itemKey = `${itemId}-${index}`;
-    const itemDetail = itemDetails[itemKey];
+const renderItem = (item, index) => {
+  const itemId = item.itemId._id || item.itemId;
+  const itemKey = `${itemId}-${index}`;
+  const itemDetail = itemDetails[itemKey];
 
-    if (loading) {
+  if (loading) {
       return (
-        <Card className="bg-muted">
-          <CardContent className="p-4">
-            <div className="animate-pulse flex items-center gap-4">
-              <div className="bg-muted-foreground h-20 w-20 rounded" />
-              <div className="flex-1">
-                <div className="bg-muted-foreground h-4 w-3/4 rounded mb-2" />
-                <div className="bg-muted-foreground h-4 w-1/2 rounded" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+          <Card className="bg-muted">
+              <CardContent className="p-4">
+                  <div className="animate-pulse flex items-center gap-4">
+                      <div className="bg-muted-foreground h-20 w-20 rounded" />
+                      <div className="flex-1">
+                          <div className="bg-muted-foreground h-4 w-3/4 rounded mb-2" />
+                          <div className="bg-muted-foreground h-4 w-1/2 rounded" />
+                      </div>
+                  </div>
+              </CardContent>
+          </Card>
       );
-    }
+  }
 
-    if (!itemDetail) {
+  if (!itemDetail) {
       return (
-        <Card>
-          <CardContent className="p-4">
-            <p className="text-muted-foreground">Error al cargar los detalles del item</p>
-          </CardContent>
-        </Card>
+          <Card>
+              <CardContent className="p-4">
+                  <p className="text-muted-foreground">Error al cargar los detalles del item</p>
+              </CardContent>
+          </Card>
       );
-    }
+  }
 
-    const isChroma = itemDetail.type === 'chromas' && itemDetail.skinData;
+  if (itemDetail.isUnranked) {
+      return (
+          <Card>
+              <CardContent className="p-4">
+                  <div className="flex items-center gap-4">
+                      <img 
+                          src={itemDetail.srcLocal || itemDetail.srcWeb} 
+                          alt={`Cuenta ${itemDetail.region}`}
+                          className="w-20 h-20 object-cover rounded"
+                      />
+                      <div className="flex-1">
+                          <div className="flex justify-between items-start">
+                              <div>
+                                  <h4 className="font-semibold">Cuenta {itemDetail.region}</h4>
+                                  <p className="text-sm text-muted-foreground">Nivel {itemDetail.nivel}</p>
+                                  <div className="flex gap-2 text-sm">
+                                      <span>EA: {itemDetail.escencia}</span>
+                                      {itemDetail.escenciaNaranja > 0 && (
+                                          <span>• EN: {itemDetail.escenciaNaranja}</span>
+                                      )}
+                                      {itemDetail.rpAmount > 0 && (
+                                          <span>•{itemDetail.rpAmount}RP</span>
+                                      )}
+                                  </div>
+                                  <span className={`text-xs ${itemDetail.handUpgrade ? 'text-emerald-500' : 'text-red-500'}`}>
+                                      {itemDetail.handUpgrade ? 'Safe' : 'Unsafe'}
+                                  </span>
+                              </div>
+                          </div>
+                      </div>
+                      <div className="text-right flex justify-center items-center gap-5">
+                        <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => {
+                                setSelectedAccount({
+                                    email: itemDetail.email,
+                                    password: itemDetail.password,
+                                    region: itemDetail.region,
+                                    nivel: itemDetail.nivel,
+                                    escencia: itemDetail.escencia,
+                                    escenciaNaranja: itemDetail.escenciaNaranja,
+                                    password: itemDetail.accountData.password,
+                                    email: itemDetail.accountData.email,
+                                    rpAmount: itemDetail.rpAmount,
+                                    handUpgrade: itemDetail.handUpgrade,
+                                    itemId: itemId // Añadimos el itemId al selectedAccount
+                                });
+                                setSelectedItemId(itemId);
+                                setIsAccountModalOpen(true);
+                            }}
+                        >
+                            Ver Cuenta
+                        </Button>
+                        <p className="font-semibold">Cantidad: {item.quantity}</p>
+                      </div>
+                  </div>
+              </CardContent>
+          </Card>
+      );
+  }
+
+  const isChroma = itemDetail.type === 'chromas' && itemDetail.skinData;
 
     return (
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex items-center gap-4">
-            <img 
-              src={itemDetail.srcLocal || itemDetail.src} 
-              alt={item.itemType === 'Skin' ? itemDetail.NombreSkin : itemDetail.name}
-              className="w-20 h-20 object-cover rounded"
-            />
-            <div className="flex-1">
-              {isChroma && itemDetail.skinData && (
-                <p className="text-sm text-muted-foreground mb-1">
-                  Chroma para: <span className="font-medium">{itemDetail.skinData.NombreSkin}</span>
-                </p>
-              )}
-              <h4 className="font-semibold">
-                {item.itemType === 'Skin' ? itemDetail.NombreSkin : itemDetail.name}
-              </h4>
-              <p className="text-sm text-muted-foreground">
-                {item.itemType === 'Skin' ? 'Skin' : itemDetail.type === 'chromas' ? 'Chroma' : 'Item'}
-              </p>
-            </div>
-            <div className="text-right">
-              <p className="font-semibold">Cantidad: {item.quantity}</p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+        <Card>
+            <CardContent className="p-4">
+                <div className="flex items-center gap-4">
+                    <img 
+                        src={itemDetail.srcLocal || itemDetail.src} 
+                        alt={item.itemType === 'Skin' ? itemDetail.NombreSkin : itemDetail.name}
+                        className="w-20 h-20 object-cover rounded"
+                    />
+                    <div className="flex-1">
+                        {isChroma && itemDetail.skinData && (
+                            <p className="text-sm text-muted-foreground mb-1">
+                                Chroma para: <span className="font-medium">{itemDetail.skinData.NombreSkin}</span>
+                            </p>
+                        )}
+                        <h4 className="font-semibold">
+                            {item.itemType === 'Skin' ? itemDetail.NombreSkin : itemDetail.name}
+                        </h4>
+                        <p className="text-sm text-muted-foreground">
+                            {item.itemType === 'Skin' ? 'Skin' : itemDetail.type === 'chromas' ? 'Chroma' : 'Item'}
+                        </p>
+                    </div>
+                    <div className="text-right">
+                        <p className="font-semibold">Cantidad: {item.quantity}</p>
+                        <p className="font-semibold">Tipo de RP: {item.isSeguro ? 'Seguro' : 'Barato'}</p>
+                    </div>
+                </div>
+            </CardContent>
+        </Card>
     );
   };
 
@@ -432,7 +539,7 @@ const OrderDetailsModal = ({ isOpen, onClose, order, onOrderUpdated, statuses, a
       <Dialog open={isOpen} onOpenChange={onClose}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Detalles del Pedido {currentOrder?._id}</DialogTitle>
+            <DialogTitle className="flex justify-around"><div>Detalles del Pedido {currentOrder?._id}</div>{admin && <div className='cursor-pointer' onClick={()=>{handleDelete(currentOrder._id)}}><FaTrash/></div>}</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-6">
@@ -535,7 +642,18 @@ const OrderDetailsModal = ({ isOpen, onClose, order, onOrderUpdated, statuses, a
           </div>
         </DialogContent>
       </Dialog>
-
+      <AccountDetailsModal 
+          isOpen={isAccountModalOpen}
+          onClose={() => {
+              setIsAccountModalOpen(false);
+              setSelectedItemId(null);
+          }}
+          account={selectedAccount}
+          currentOrder={currentOrder}
+          admin={admin}
+          itemId={selectedItemId}
+          onAccountUpdate={handleAccountUpdate}
+      />
       <ImageModal />
     </>
   );

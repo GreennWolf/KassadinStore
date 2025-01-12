@@ -20,15 +20,15 @@ async function validateEntities(rpPriceId, currencyId) {
 const rpPriceConversionController = {
     createRPPriceConversion: async (req, res, next) => {
         try {
-            const { rpPrice, currency, priceSeguro,priceBarato,gold } = req.body;
+            const { rpPrice, currency, priceSeguro,priceBarato } = req.body;
 
-            if (!rpPrice || !currency || !priceSeguro || !priceBarato || !gold) {
+            if (!rpPrice || !currency || !priceSeguro || !priceBarato) {
                 throw new CustomError('Todos los campos son requeridos', 400);
             }
 
             await validateEntities(rpPrice, currency);
 
-            const newConversion = await RPPriceConversion.create({ rpPrice, currency, priceSeguro,priceBarato ,gold });
+            const newConversion = await RPPriceConversion.create({ rpPrice, currency, priceSeguro,priceBarato  });
             const populatedConversion = await RPPriceConversion.findById(newConversion._id)
                 .populate('rpPrice')
                 .populate('currency');
@@ -57,13 +57,13 @@ const rpPriceConversionController = {
     updateRPPriceConversion: async (req, res, next) => {
         try {
             const { id } = req.params;
-            const { rpPrice, currency, priceSeguro,priceBarato,gold ,active} = req.body;
+            const { rpPrice, currency, priceSeguro,priceBarato ,active} = req.body;
 
             await validateEntities(rpPrice, currency);
 
             const updatedConversion = await RPPriceConversion.findByIdAndUpdate(
                 id,
-                { rpPrice, currency, priceSeguro,priceBarato,gold ,active},
+                { rpPrice, currency, priceSeguro,priceBarato ,active},
                 { new: true, runValidators: true }
             ).populate('rpPrice').populate('currency');
 

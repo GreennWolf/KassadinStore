@@ -18,7 +18,11 @@ const perfilImage = require('./routes/perfilImageRoutes')
 const rankRoutes = require('./routes/rankRoutes')
 const xpConvertionRoutes = require('./routes/xpConvertionRoutes')
 const lootBoxRoutes = require('./routes/lootBoxRoutes')
+const inventoryRoutes = require('./routes/inventoryRoutes')
+const goldConvertionRoutes = require('./routes/goldConvertionRoutes')
+const unrankedRoutes = require('./routes/unrankedRoutes')
 const { errorHandler } = require('./middlewares/errorHandler');
+const { verifyEmail } = require('./controllers/userController');
 
 const app = express();
 
@@ -26,12 +30,16 @@ const app = express();
 connectToDatabase();
 
 // Middlewares
-app.use(cors({
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    allowedHeaders: ['Content-Type'],
-}));
 app.use(express.json());
-app.use(errorHandler);
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(cors({
+    origin: ['https://ksdinstore.com', 'http://localhost:3000', 'http://localhost:8080'], // Agrega todos los orígenes permitidos
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+    credentials: true,
+    maxAge: 86400 // 24 horas
+}));
 
 // Rutas
 app.use('/api', championRoutes);
@@ -48,6 +56,10 @@ app.use('/api/perfil-images',perfilImage );
 app.use('/api/ranks',rankRoutes );
 app.use('/api/xp-convertions',xpConvertionRoutes );
 app.use('/api/lootboxes',lootBoxRoutes );
+app.use('/api/inventory',inventoryRoutes );
+app.use('/api/gold-convertions', goldConvertionRoutes);
+app.use('/api/unrankeds', unrankedRoutes);
+app.get('/verify/:token', verifyEmail);
 app.use('/images', express.static(path.join(__dirname, 'public/images')));
 app.use('/chromas', express.static(path.join(__dirname, 'public/chromas')));
 app.use('/receipts', express.static(path.join(__dirname, 'public/receipts')));
@@ -56,6 +68,11 @@ app.use('/currencys', express.static(path.join(__dirname, 'public/currencys')));
 app.use('/PerfilImage', express.static(path.join(__dirname, 'public/PerfilImage')));
 app.use('/RankIcons', express.static(path.join(__dirname, 'public/RankIcons')));
 app.use('/lootbox', express.static(path.join(__dirname, 'public/lootbox')));
+app.use('/logo', express.static(path.join(__dirname, 'public/Logo.png')));
+app.use('/unrankeds', express.static(path.join(__dirname, 'public/unrankeds')));
+
+app.use(errorHandler);
+
 
 // Middleware para manejo de errores
 app.use((err, req, res, next) => {

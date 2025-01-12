@@ -17,7 +17,8 @@ export const EditPaymentMethodModal = ({
     onActiveChange,
     onSubmit,
     isLoading
-}) => (
+}) => {
+    return (
     <Modal
         isOpen={isOpen}
         onClose={onClose}
@@ -40,7 +41,7 @@ export const EditPaymentMethodModal = ({
                     placeholder="Método"
                     value={selectedMethod.method}
                     onChange={(e) => onMethodChange(e.target.value)}
-                    className="border p-2 m-2"
+                    className="border p-2 m-2 bg-black"
                     required
                 />
                 
@@ -79,4 +80,4 @@ export const EditPaymentMethodModal = ({
             </div>
         )}
     </Modal>
-);
+)};

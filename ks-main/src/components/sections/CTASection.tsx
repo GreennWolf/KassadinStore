@@ -12,17 +12,19 @@ export const CTASection = () => {
       <div className="relative container mx-auto px-4">
         <div className="max-w-3xl mx-auto text-center">
           <h2 className="text-4xl md:text-5xl font-bold mb-6 bg-gradient-to-r from-white via-white/80 to-white/60 bg-clip-text text-transparent animate-fade-in">
-            Únete a la Comunidad de League of Legends
+            ¿Listo para mejorar tu experiencia?
           </h2>
           <p className="text-lg text-white/80 mb-8 animate-fade-in" style={{ animationDelay: '0.2s' }}>
             Descubre una amplia selección de skins y servicios para mejorar tu experiencia de juego
           </p>
           <Button 
-            onClick={() => navigate('/tienda/skins')}
+            onClick={() => {
+              window.scrollTo(0, 0);
+              navigate('/Tienda/skins')}}
             className="px-8 py-6 text-lg bg-white hover:bg-white/90 text-black transition-all duration-300 transform hover:scale-105 animate-fade-in"
             style={{ animationDelay: '0.4s' }}
           >
-            Explorar Catálogo
+            Conseguí tu skin favorita
           </Button>
         </div>
       </div>

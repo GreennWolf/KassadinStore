@@ -120,12 +120,13 @@ const championController = {
 const skinController = {
     getAllSkins: async (req, res, next) => {
         try {
-            const page = parseInt(req.query.page) || 1;
-            const limit = parseInt(req.query.limit) || 20;
+            const page = parseInt(req.query.page);
+            const limit = parseInt(req.query.limit);
             const search = req.query.search || '';
             const subcategory = req.query.subcategory || 'all';
             const showAll = req.query.showAll === 'true';
             const orderByNew = req.query.orderByNew === 'true';
+            const reward = req.query.reward === 'true'; // Nuevo parámetro
             const skip = (page - 1) * limit;
     
             let query = {};
@@ -135,28 +136,29 @@ const skinController = {
                 query.active = true;
             }
     
-            // Añadir búsqueda si existe
+            // Aplicar filtro de reward si está especificado
+            if (reward) {
+                query.reward = true;
+            }
+    
             if (search) {
                 query.NombreSkin = { $regex: search, $options: 'i' };
             }
     
-            // Filtrar por subcategoría si es necesario
             if (subcategory === 'chromas') {
                 query.type = 'chromas';
             } else if (subcategory === 'bundles') {
                 query.type = 'bundle';
             } else {
-                // Para 'all', excluimos chromas y bundles
                 query.type = { $nin: ['chromas', 'bundle'] };
             }
     
-            // Configurar el ordenamiento
             const sortStage = orderByNew 
                 ? { 
                     $sort: { 
-                        'new': -1, // Primero las nuevas
-                        'championData.name': 1, // Luego por nombre de campeón
-                        'NombreSkin': 1 // Finalmente por nombre de skin
+                        'new': -1,
+                        'championData.name': 1,
+                        'NombreSkin': 1
                     } 
                 }
                 : { 
@@ -166,41 +168,48 @@ const skinController = {
                     } 
                 };
     
-            // Utilizamos aggregation para ordenar
-            const [skins, total] = await Promise.all([
-                Skin.aggregate([
-                    { $match: query },
-                    {
-                        $lookup: {
-                            from: 'champions',
-                            localField: 'champion',
-                            foreignField: '_id',
-                            as: 'championData'
-                        }
-                    },
-                    { $unwind: '$championData' },
-                    {
-                        $lookup: {
-                            from: 'rpprices',
-                            localField: 'priceRP',
-                            foreignField: '_id',
-                            as: 'priceRPData'
-                        }
-                    },
-                    { $unwind: '$priceRPData' },
-                    sortStage,
+            let aggregationPipeline = [
+                { $match: query },
+                {
+                    $lookup: {
+                        from: 'champions',
+                        localField: 'champion',
+                        foreignField: '_id',
+                        as: 'championData'
+                    }
+                },
+                { $unwind: '$championData' },
+                {
+                    $lookup: {
+                        from: 'rpprices',
+                        localField: 'priceRP',
+                        foreignField: '_id',
+                        as: 'priceRPData'
+                    }
+                },
+                { $unwind: '$priceRPData' },
+                sortStage
+            ];
+    
+            // Solo aplicar paginación si limit no es 0
+            if (limit !== 0) {
+                aggregationPipeline.push(
                     { $skip: skip },
                     { $limit: limit }
-                ]),
+                );
+            }
+    
+            const [skins, total] = await Promise.all([
+                Skin.aggregate(aggregationPipeline),
                 Skin.countDocuments(query)
             ]);
     
             res.json({
                 data: skins,
                 total,
-                currentPage: page,
-                totalPages: Math.ceil(total / limit),
-                hasMore: skip + skins.length < total
+                currentPage: limit === 0 ? 1 : page,
+                totalPages: limit === 0 ? 1 : Math.ceil(total / limit),
+                hasMore: limit !== 0 ? skip + skins.length < total : false
             });
         } catch (error) {
             next(error);
@@ -284,6 +293,7 @@ const skinController = {
     updateSkin: async (req, res, next) => {
         try {
             const skinData = req.body;
+
             const oldSkin = await Skin.findById(req.params.id).populate('champion');
             
             if (!oldSkin) {

@@ -34,7 +34,7 @@ export const UsuariosManager = () => {
     try {
       const data = await getUsers();
       setUsers(data.data);
-      console.log(data.data)
+      // console.log(data.data)
     } catch (error) {
       console.error(error);
       toast.error("Error al cargar los usuarios");
@@ -77,7 +77,7 @@ export const UsuariosManager = () => {
 
   const handleEditUser = async (userData) => {
     try {
-      console.log('updateing',userData)
+      // console.log('updateing',userData)
       await updateUser(selectedUser._id, userData);
       toast.success("Usuario actualizado exitosamente");
       await fetchUsers();

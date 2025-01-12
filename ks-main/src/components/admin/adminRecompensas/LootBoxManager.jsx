@@ -31,7 +31,7 @@ export function LootboxManager() {
   const fetchLootboxes = async () => {
     try {
       const data = await getAllLootboxes(true); // true para incluir inactivas
-      console.log(data)
+      // console.log(data)
       setLootboxes(data);
     } catch (error) {
       console.error(error);

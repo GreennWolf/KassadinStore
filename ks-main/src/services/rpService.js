@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:3000/api/items';
+const API_BASE_URL = `${import.meta.env.VITE_API_URL}/api/items`;
 
 /**
  * Crear un nuevo precio de RP
@@ -38,7 +38,7 @@ export const getAllRpPrice = async () => {
  * @returns {Promise} Respuesta del servidor
  */
 export const updateRpPrice = async (id, rpPriceData) => {
-    console.log(rpPriceData)
+    // console.log(rpPriceData)
     try {
         const response = await axios.put(`${API_BASE_URL}/rp-price/update/${id}`, rpPriceData);
         return response.data;

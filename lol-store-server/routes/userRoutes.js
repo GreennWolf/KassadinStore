@@ -5,7 +5,8 @@ const {
     updateUser,
     getUsers, // Importa la función
     getUser,
-    deleteUser
+    deleteUser,
+    verifyEmail
 } = require('../controllers/userController');
 
 

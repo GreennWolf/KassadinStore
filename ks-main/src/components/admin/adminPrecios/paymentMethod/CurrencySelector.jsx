@@ -8,7 +8,6 @@ export const CurrencySelector = ({
     isRestricted, 
     onRestrictionChange 
 }) => {
-    // console.log('Selected Currencies:', selectedCurrencies); // Para debugging
 
     return (
         <div className="border p-4 rounded mt-4 bg-gray-800">
@@ -18,6 +17,7 @@ export const CurrencySelector = ({
                     <input
                         type="checkbox"
                         checked={isRestricted}
+                        
                         onChange={(e) => onRestrictionChange(e.target.checked)}
                         className="mr-2"
                     />

@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { getAllPurchases, getAllStatus } from "../../../services/purcharseService";
+import { getAllPurchases, getAllStatus ,deletePurchase} from "../../../services/purcharseService";
 import { toast } from 'react-toastify';
 import { FiFilter, FiX } from 'react-icons/fi';
 import { Loader2, Timer, ArrowRight } from 'lucide-react';
 import OrderDetailsModal from '../../OrderDetailsModal';
 import Filters from "../../Filters";
+import {FaTrash} from 'react-icons/fa'
+
 
 export const PedidosManager = () => {
     const [orders, setOrders] = useState([]);
@@ -130,6 +132,7 @@ export const PedidosManager = () => {
         setFilters({ ...filters, ...newFilters });
     };
 
+
     if (loading) {
         return (
             <div className="h-full w-full flex items-center justify-center">
@@ -147,7 +150,7 @@ export const PedidosManager = () => {
                 <h2 className="text-2xl font-bold text-white">Gestión de Pedidos</h2>
                 <button
                     onClick={() => setIsFilterOpen(!isFilterOpen)}
-                    className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/80 text-white rounded-lg transition-all duration-300"
+                    className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/80 text-black rounded-lg transition-all duration-300"
                 >
                     {isFilterOpen ? (
                         <>
@@ -157,7 +160,7 @@ export const PedidosManager = () => {
                     ) : (
                         <>
                             <FiFilter size={20} />
-                            <span>Filtrar</span>
+                            <div className="font-bold">Filtrar</div>
                         </>
                     )}
                 </button>
@@ -198,7 +201,7 @@ export const PedidosManager = () => {
                     <div className="relative overflow-hidden">
                         <div className="overflow-x-auto">
                             <div className="overflow-y-auto max-h-[calc(100vh-200px)]">
-                                <table className="w-full whitespace-nowrap">
+                                <table className="w-full ">
                                     <thead className="sticky top-0 bg-primary/10 text-primary-foreground z-10">
                                         <tr>
                                             <th className="px-4 py-3 text-left">ID</th>
@@ -223,7 +226,7 @@ export const PedidosManager = () => {
                                                         className="hover:bg-accent/50 cursor-pointer"
                                                         onClick={() => handleOrderClick(order)}
                                                     >
-                                                        <td className="px-4 py-3 truncate">{order._id}</td>
+                                                        <td className="px-4 text-sm py-3 truncate">{order._id}</td>
                                                         <td className="px-4 py-3">{order.userId?.username}</td>
                                                         <td className="px-4 py-3">{order.riotName}</td>
                                                         <td className="px-4 py-3">{order.region}</td>
@@ -251,6 +254,7 @@ export const PedidosManager = () => {
                                                         <td className="px-4 py-3">{order.totalRP}</td>
                                                         <td className="px-4 py-3">{order.Total}</td>
                                                         <td className="px-4 py-3">{formatDate(order.purchaseDate)}</td>
+                                                        
                                                     </tr>
                                                 );
                                             })

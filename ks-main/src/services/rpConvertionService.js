@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Define la URL base de la API
-const API_BASE_URL = 'http://localhost:3000/api'; // Cambia el puerto si es necesario
+const API_BASE_URL = `${import.meta.env.VITE_API_URL}/api`; // Cambia el puerto si es necesario
 
 // Crear una nueva conversión de RP a divisa
 export const createRPPriceConversion = async (rpPrice, currency,priceSeguro ,priceBarato) => {

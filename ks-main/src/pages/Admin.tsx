@@ -11,9 +11,22 @@ import AdminProducts from '@/components/admin/AdminProducts'
 import {AdminRank} from '@/components/admin/AdminRank'
 import {AdminRecompensas} from '@/components/admin/AdminRecompensas'
 import {AdminPedidos} from '@/components/admin/AdminPedidos'
+import { useEffect, useState } from "react";
+import { toast, ToastContainer } from 'react-toastify';
 
 const Admin = () => {
-  console.log("Admin component rendering");
+
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  useEffect(() => {
+    const loggedUser = localStorage.getItem("user");
+    if (loggedUser) {
+      const user = JSON.parse(loggedUser);
+      if (user.role !== "admin") {
+        window.location.href = "/";
+      }
+    }
+  }, []);
 
   return (
     <div className="min-h-screen bg-background">
@@ -48,7 +61,7 @@ const Admin = () => {
                 <CardDescription>Administra tu catálogo de productos aquí.</CardDescription>
               </CardHeader>
               <CardContent>
-                <AdminProducts/>
+                <AdminProducts isUpdating={isUpdating} setIsUpdating={setIsUpdating}/>
               </CardContent>
             </Card>
           </TabsContent>
@@ -114,6 +127,7 @@ const Admin = () => {
           </TabsContent>
         </Tabs>
       </div>
+      <ToastContainer />
     </div>
   );
 };

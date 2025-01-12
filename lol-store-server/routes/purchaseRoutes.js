@@ -15,7 +15,8 @@ const {
     getUnreadCount,
     getTotalPurchases,
     confirmPurchaseStatus,
-    getPurchasesNeedingConfirmation
+    getPurchasesNeedingConfirmation,
+    chargeAccountData
 } = require('../controllers/purcharseController');
 
 const router = express.Router();
@@ -39,5 +40,7 @@ router.get('/status/getAll', getAllStatus);
 router.get('/status/get/:id', getStatusById); // Nueva ruta
 router.put('/status/edit/:id', updateStatus); // Corrección aquí
 router.delete('/status/delete/:id', deleteStatus); // Corrección aquí
+
+router.patch('/:purchaseId/items/:itemId/account', chargeAccountData);
 
 module.exports = router;

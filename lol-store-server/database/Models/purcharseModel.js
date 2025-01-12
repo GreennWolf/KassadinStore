@@ -18,11 +18,22 @@ const purchaseSchema = new mongoose.Schema({
         itemType: {
             type: String,
             required: true,
-            enum: ['Skin', 'Item']
+            enum: ['Skin', 'Item', 'Unranked']    
+        },
+        isSeguro: {
+            type: Boolean,
+            required: true,
         },
         quantity: {
             type: Number,
             required: true
+        },
+        accountData: {
+            type: {
+                email: String,
+                password: String
+            },
+            default: null
         }
     }],
     status: {

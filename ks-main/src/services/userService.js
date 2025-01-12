@@ -1,13 +1,15 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:3000/api'; // Asegúrate de cambiar el puerto si es necesario
+const API_BASE_URL = `${import.meta.env.VITE_API_URL}/api`; // Asegúrate de cambiar el puerto si es necesario
+const API_VERIFY_URL = `${import.meta.env.VITE_API_URL}/verify`; // Asegúrate de cambiar el puerto si es necesario
 
-const API_BASE_IMAGE = 'http://localhost:3000';
+const API_BASE_IMAGE = `${import.meta.env.VITE_API_URL}`;
+
 
 
 const transformImageUrls = (users) => {
     if (!users) return null;
-    console.log(users)
+    // console.log(users)
     return {
         ...users,
         src: users?.perfilImage.src ? `${API_BASE_IMAGE}${users.perfilImage.src.replace(/\\/g, '/')}` : null
@@ -16,7 +18,7 @@ const transformImageUrls = (users) => {
 
 const transformImageUrlSingle = (user) => {
     if (!user) return null;
-    console.log(user)
+    // console.log(user)
     return {
         ...user,
         src: user.perfilImage.src ? `${API_BASE_IMAGE}${user.perfilImage.src.replace(/\\/g, '/')}` : null
@@ -47,10 +49,13 @@ export const registerUser = async (userData) => {
 export const loginUser = async (credentials) => {
     try {
         const response = await axios.post(`${API_BASE_URL}/users/login`, credentials);
+        if (!response.data.user.verified) {
+            throw new Error('Por favor verifica tu correo electrónico antes de iniciar sesión');
+        }
         return {
             ...response.data,
             data: transformImageUrlSingle(response.data.user)
-        }
+        };
     } catch (error) {
         console.error('Error al iniciar sesión:', error);
         throw error;
@@ -107,3 +112,13 @@ export const deleteUser = async (id) => {
         throw error;
     }
 };
+
+export const verifyEmail = async (token) => {
+    try {
+        const response = await axios.get(`${API_VERIFY_URL}/${token}`);
+        return response.data;
+    } catch (error) {
+        console.error('Error al verificar el email:', error);
+        throw error;
+    }
+}

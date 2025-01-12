@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://localhost:3000/api/xp-convertions';
+
+const API_BASE_URL = `${import.meta.env.VITE_API_URL}/api/xp-convertions`;
 
 /**
  * Crear una nueva conversión de XP

@@ -2,6 +2,10 @@ const User = require('../database/Models/userModel');
 const bcrypt = require('bcrypt');
 const { CustomError } = require('../middlewares/errorHandler');
 const PerfilImage = require('../database/Models/perfilImage');
+const VerificationToken = require('../database/Models/verificationToken')
+const { sendVerificationEmail } = require('../services/emailService');
+const jwt = require('jsonwebtoken');
+
 ;
 
 const SALT_ROUNDS = 10;
@@ -55,19 +59,42 @@ const userController = {
                 password: hashedPassword,
                 role: !role ? 'user' : role,
                 perfilImage: selectedImage._id,
+                verified: false // Agregamos el campo verified
             });
+    
+            // Generar token de verificación
+            const verificationToken = jwt.sign(
+                { userId: newUser._id },
+                process.env.JWT_SECRET || 'tu-secreto-jwt', // Idealmente usar variable de entorno
+                { expiresIn: '1h' }
+            );
+    
+            // Guardar el token en la base de datos
+            await VerificationToken.create({
+                userId: newUser._id,
+                token: verificationToken
+            });
+    
+            // Enviar email de verificación
+            try {
+                await sendVerificationEmail(email, verificationToken);
+            } catch (emailError) {
+                console.error('Error al enviar email de verificación:', emailError);
+                // No lanzamos el error para no interrumpir el registro
+            }
     
             // Prepare user response without password
             const userResponse = newUser.toObject();
             delete userResponse.password;
-    
+            
             // Populate the profile image details
             const populatedUser = await User.findById(newUser._id)
                 .select('-password')
-                .populate('perfilImage').populate('rank');
+                .populate('perfilImage')
+                .populate('rank');
     
             res.status(201).json({ 
-                message: 'Usuario registrado exitosamente',
+                message: 'Usuario registrado exitosamente. Por favor verifica tu correo electrónico.',
                 user: populatedUser 
             });
         } catch (error) {
@@ -83,6 +110,7 @@ const userController = {
                 throw new CustomError('Credenciales incompletas', 400);
             }
 
+
             const user = await User.findOne({
                 $or: [{ username: identifier }, { email: identifier }]
             }).populate('perfilImage').populate('rank');
@@ -95,6 +123,11 @@ const userController = {
             if (!isMatch) {
                 throw new CustomError('Credenciales inválidas', 401);
             }
+
+            if (!user.verified) {
+                throw new CustomError('Por favor verifica tu correo electrónico antes de iniciar sesión', 401);
+            }
+
 
             const userResponse = user.toObject();
             delete userResponse.password;
@@ -190,7 +223,33 @@ const userController = {
         } catch (error) {
             next(error);
         }
-    }
+    },
+    verifyEmail: async (req, res, next) => {
+        try {
+            const { token } = req.params;
+            
+            const verificationToken = await VerificationToken.findOne({ token });
+            if (!verificationToken) {
+                throw new CustomError('Token inválido o expirado', 400);
+            }
+    
+            const user = await User.findById(verificationToken.userId);
+            if (!user) {
+                throw new CustomError('Usuario no encontrado', 404);
+            }
+    
+            user.verified = true;
+            await user.save();
+            await VerificationToken.deleteOne({ token });
+    
+            // Redirigir a una página de confirmación
+            res.status(200).json({ 
+                message: 'Usuario verificado exitosamente' 
+            });
+        } catch (error) {
+            next(error);
+        }
+    }    
 };
 
 module.exports = userController;
