@@ -10,20 +10,20 @@ const ELOBOOST_URL = `${API_URL}/api/eloboost`;
 const getAuthToken = () => {
   // Intentar primero con localStorage.getItem('token')
   const directToken = localStorage.getItem('token');
-  console.log('Token directo de localStorage:', directToken);
+  // console.log('Token directo de localStorage:', directToken);
   
   if (directToken) return directToken;
   
   // Si no está disponible, intentar extraerlo del objeto user
   const userJson = localStorage.getItem('user');
-  console.log('User JSON de localStorage:', userJson);
+  // console.log('User JSON de localStorage:', userJson);
   
   if (!userJson) return null;
   
   try {
     const user = JSON.parse(userJson);
-    console.log('User parseado:', user);
-    console.log('Token del user:', user?.token);
+    // console.log('User parseado:', user);
+    // console.log('Token del user:', user?.token);
     return user?.token || null;
   } catch (error) {
     console.error('Error parsing user JSON:', error);
@@ -321,22 +321,22 @@ export const createEloBoostRank = async (rankData) => {
 
 export const updateEloBoostRank = async (rankId, rankData) => {
   try {
-    console.log('========== INICIO updateEloBoostRank ==========');
+    // console.log('========== INICIO updateEloBoostRank ==========');
     
     // Obtener el usuario de localStorage para extraer el ID
     const userJson = localStorage.getItem('user');
-    console.log('User JSON directamente de localStorage:', userJson);
+    // console.log('User JSON directamente de localStorage:', userJson);
     
     let user = null;
     try {
       user = userJson ? JSON.parse(userJson) : null;
-      console.log('User parseado completo:', user);
+      // console.log('User parseado completo:', user);
     } catch (e) {
       console.error('Error al parsear user JSON:', e);
     }
     
     const userId = user?._id;
-    console.log('UserID extraído:', userId);
+    // console.log('UserID extraído:', userId);
     
     if (!userId) {
       throw new Error('Usuario no autenticado');
@@ -344,15 +344,15 @@ export const updateEloBoostRank = async (rankId, rankData) => {
 
     // Intentar obtener el token directamente de localStorage
     const directToken = localStorage.getItem('token');
-    console.log('Token directo de localStorage:', directToken);
+    // console.log('Token directo de localStorage:', directToken);
     
     // Intentar obtener el token del objeto user
     const userToken = user?.token;
-    console.log('Token del objeto user:', userToken);
+    // console.log('Token del objeto user:', userToken);
     
     // Usar el que esté disponible
     const authToken = directToken || userToken;
-    console.log('Token final que se usará:', authToken);
+    // console.log('Token final que se usará:', authToken);
     
     if (!authToken) {
       throw new Error('Token de autenticación no encontrado');
@@ -366,7 +366,7 @@ export const updateEloBoostRank = async (rankId, rankData) => {
       }
     };
     
-    console.log('Config para la petición:', JSON.stringify(config));
+    // console.log('Config para la petición:', JSON.stringify(config));
     
     const formData = new FormData();
     
@@ -377,25 +377,25 @@ export const updateEloBoostRank = async (rankId, rankData) => {
     Object.keys(rankData).forEach(key => {
       if (key === 'icon' && rankData[key] instanceof File) {
         formData.append(key, rankData[key]);
-        console.log('Añadido archivo icon a formData');
+        // console.log('Añadido archivo icon a formData');
       } else if (key === 'divisions') {
         formData.append(key, JSON.stringify(rankData[key]));
-        console.log('Añadido divisions a formData:', JSON.stringify(rankData[key]));
+        // console.log('Añadido divisions a formData:', JSON.stringify(rankData[key]));
       } else {
         formData.append(key, rankData[key]);
-        console.log(`Añadido ${key}:${rankData[key]} a formData`);
+        // console.log(`Añadido ${key}:${rankData[key]} a formData`);
       }
     });
     
     const url = `${ELOBOOST_URL}/ranks/${rankId}`;
-    console.log('URL completa para la petición:', url);
+    // console.log('URL completa para la petición:', url);
     
-    console.log('Enviando solicitud PUT...');
+    // console.log('Enviando solicitud PUT...');
     const response = await axios.put(url, formData, config);
-    console.log('Respuesta recibida:', response.status);
-    console.log('Datos de respuesta:', response.data);
+    // console.log('Respuesta recibida:', response.status);
+    // console.log('Datos de respuesta:', response.data);
     
-    console.log('========== FIN updateEloBoostRank ==========');
+    // console.log('========== FIN updateEloBoostRank ==========');
     return response.data;
   } catch (error) {
     console.error('========== ERROR updateEloBoostRank ==========');
@@ -546,7 +546,7 @@ export const updateEloBoostOrderStatus = async (orderId, statusData, token) => {
       userId
     };
     
-    console.log('Enviando actualización de estado:', {
+    // console.log('Enviando actualización de estado:', {
       orderId,
       status: statusData.status,
       notes: statusData.notes || '(sin notas)'
@@ -564,14 +564,14 @@ export const updateEloBoostOrderStatus = async (orderId, statusData, token) => {
       config
     );
     
-    console.log('Respuesta del servidor tras actualizar estado:', response.data);
+    // console.log('Respuesta del servidor tras actualizar estado:', response.data);
     
     // Verificar que la respuesta incluye la orden actualizada
     if (!response.data.order) {
       console.warn('La respuesta no incluye la orden actualizada');
     } else {
       // Verificar fechas
-      console.log('Fechas en la orden actualizada:', {
+      // console.log('Fechas en la orden actualizada:', {
         status: response.data.order.status,
         startDate: response.data.order.startDate,
         completionDate: response.data.order.completionDate

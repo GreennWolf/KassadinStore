@@ -21,7 +21,7 @@ export const ProductGrid = ({
 
   // Manejar clic en una cuenta unranked
   const handleUnrankedClick = (product) => {
-    console.log("Clic en unranked:", product);
+    // console.log("Clic en unranked:", product);
     if (category === 'unrankeds') {
       setSelectedUnranked(product);
       setShowDetailModal(true);

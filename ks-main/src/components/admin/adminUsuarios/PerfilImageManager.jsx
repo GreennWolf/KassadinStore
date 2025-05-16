@@ -34,7 +34,7 @@ export function PerfilImageManager() {
     try {
       const data = await getAllPerfilImages();
       setPerfilImages(data.data);
-      // console.log(data.data)
+      // // console.log(data.data)
     } catch (error) {
       console.error(error);
       toast.error("Error al cargar las imágenes de perfil");
@@ -65,7 +65,7 @@ export function PerfilImageManager() {
 
   const handleCreateImage = async (imageData) => {
     try {
-        // console.log(imageData)
+        // // console.log(imageData)
       await createPerfilImage(imageData);
       toast.success("Imagen de perfil creada exitosamente");
       await fetchPerfilImages();

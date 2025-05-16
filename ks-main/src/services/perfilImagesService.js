@@ -32,7 +32,7 @@ const transformPerfilImagesArray = (PerfilImages) => {
 export const createPerfilImage = async (imageData) => {
     try {
         for (const [key, value] of imageData.entries()) {
-            // console.log(`${key}:`, value);
+            // // console.log(`${key}:`, value);
         }
         const response = await axios.post(`${API_BASE_URL}/`, imageData, {
             headers: {

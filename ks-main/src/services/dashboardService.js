@@ -42,7 +42,7 @@ const transformImageUrls = (product) => {
     // Loguear productos desconocidos
     if ((isSkin && transformedProduct.itemName === 'Skin desconocida') ||
         (!isSkin && transformedProduct.itemName === 'Producto desconocido')) {
-        console.log(
+        // console.log(
             '[ALERTA] Producto desconocido encontrado:',
             {
                 id: transformedProduct.itemId,

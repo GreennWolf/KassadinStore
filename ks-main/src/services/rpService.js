@@ -38,7 +38,7 @@ export const getAllRpPrice = async () => {
  * @returns {Promise} Respuesta del servidor
  */
 export const updateRpPrice = async (id, rpPriceData) => {
-    // console.log(rpPriceData)
+    // // console.log(rpPriceData)
     try {
         const response = await axios.put(`${API_BASE_URL}/rp-price/update/${id}`, rpPriceData);
         return response.data;

@@ -27,7 +27,7 @@ export function RewardCouponManager() {
         try {
             setIsLoading(true);
             const response = await getRewardCouponPresetByType("store");
-            console.log(response);
+            // console.log(response);
             setCoupons(Array.isArray(response) ? response : []);
         } catch (error) {
             console.error("Error fetching coupons:", error);

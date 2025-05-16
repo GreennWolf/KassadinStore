@@ -9,7 +9,7 @@ const API_BASE_IMAGE = `${import.meta.env.VITE_API_URL}`;
 
 const transformImageUrls = (users) => {
     if (!users) return null;
-    // console.log(users)
+    // // console.log(users)
     return {
         ...users,
         src: users?.perfilImage.src ? `${API_BASE_IMAGE}${users.perfilImage.src.replace(/\\/g, '/')}` : null
@@ -18,7 +18,7 @@ const transformImageUrls = (users) => {
 
 const transformImageUrlSingle = (user) => {
     if (!user) return null;
-    // console.log(user)
+    // // console.log(user)
     return {
         ...user,
         src: user.perfilImage.src ? `${API_BASE_IMAGE}${user.perfilImage.src.replace(/\\/g, '/')}` : null
@@ -80,7 +80,7 @@ export const getUpdatedUser = async (id , me=false) => {
 // Función para actualizar el perfil de usuario
 export const updateUser = async (id, updates) => {
     try {
-        // console.log(updates)
+        // // console.log(updates)
         const response = await axios.put(`${API_BASE_URL}/users/edit/${id}`, updates);
         return response.data;
     } catch (error) {
@@ -108,7 +108,7 @@ export const getUsers = async () => {
 export const deleteUser = async (id) => {
     try {
         const response = await axios.delete(`${API_BASE_URL}/users/delete/${id}`);
-        // console.log('Usuario eliminado:', response.data);
+        // // console.log('Usuario eliminado:', response.data);
         return response.data;
     } catch (error) {
         console.error('Error al eliminar el usuario:', error);

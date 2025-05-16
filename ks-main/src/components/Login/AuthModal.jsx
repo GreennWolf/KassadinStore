@@ -54,7 +54,7 @@ export function AuthModal({ isOpen, onClose }) {
       
       // Guardar el token por separado para acceso directo
       if (user.token) {
-        console.log('Guardando token:', user.token);
+        // console.log('Guardando token:', user.token);
         localStorage.setItem('token', user.token);
       } else {
         console.warn('No se encontró token en la respuesta del servidor');

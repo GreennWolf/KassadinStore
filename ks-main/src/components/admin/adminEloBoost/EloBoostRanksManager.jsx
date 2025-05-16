@@ -39,10 +39,10 @@ const EloBoostRanksManager = () => {
   const user = userJson ? JSON.parse(userJson) : null;
   const token = localStorage.getItem('token') || (user ? user.token : null);
   
-  console.log("EloBoostRanksManager - Token en localStorage:", localStorage.getItem('token'));
-  console.log("EloBoostRanksManager - User en localStorage:", userJson);
-  console.log("EloBoostRanksManager - User parseado:", user);
-  console.log("EloBoostRanksManager - Token final:", token);
+  // console.log("EloBoostRanksManager - Token en localStorage:", localStorage.getItem('token'));
+  // console.log("EloBoostRanksManager - User en localStorage:", userJson);
+  // console.log("EloBoostRanksManager - User parseado:", user);
+  // console.log("EloBoostRanksManager - Token final:", token);
 
   // Cargar rangos
   useEffect(() => {
@@ -86,14 +86,14 @@ const EloBoostRanksManager = () => {
   // Guardar un rango (crear o actualizar)
   const handleSaveRank = async (rankData) => {
     try {
-      console.log("handleSaveRank - Inicio de función");
+      // console.log("handleSaveRank - Inicio de función");
       setLoading(true);
       
-      console.log("handleSaveRank - Token:", token);
-      console.log("handleSaveRank - RankData:", rankData);
+      // console.log("handleSaveRank - Token:", token);
+      // console.log("handleSaveRank - RankData:", rankData);
       
       if (currentRank) {
-        console.log("handleSaveRank - Actualizando rango existente:", currentRank._id);
+        // console.log("handleSaveRank - Actualizando rango existente:", currentRank._id);
         // Actualizar rango existente
         await updateEloBoostRank(currentRank._id, rankData);
         toast({
@@ -101,7 +101,7 @@ const EloBoostRanksManager = () => {
           description: 'Rango actualizado correctamente',
         });
       } else {
-        console.log("handleSaveRank - Creando nuevo rango");
+        // console.log("handleSaveRank - Creando nuevo rango");
         // Crear nuevo rango
         await createEloBoostRank(rankData);
         toast({

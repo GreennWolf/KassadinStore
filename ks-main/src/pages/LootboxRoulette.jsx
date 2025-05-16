@@ -139,7 +139,7 @@ const LootboxRoulette = ({ lootboxId }) => {
       // Llamada a la API para abrir la lootbox
       const response = await openLootbox(lootboxId);
       const targetItem = response.itemReceived;
-      console.log("Ítem ganador:", targetItem);
+      // console.log("Ítem ganador:", targetItem);
 
       // Buscar el índice del ítem ganador en la lista original
       let winningIndex = findExactItemIndex(lootbox.items, targetItem);
@@ -151,7 +151,7 @@ const LootboxRoulette = ({ lootboxId }) => {
       // Calculamos el índice de la copia central de ese ítem
       const originalLength = lootbox.items.length;
       const copyIndex = Math.floor(REPS / 2) * originalLength + winningIndex;
-      console.log("Índice de copia a desplazar:", copyIndex);
+      // console.log("Índice de copia a desplazar:", copyIndex);
 
       // Obtenemos el elemento DOM correspondiente
       const targetElement = itemRefs.current[copyIndex];

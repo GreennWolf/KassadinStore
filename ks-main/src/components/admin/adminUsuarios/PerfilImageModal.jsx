@@ -38,8 +38,8 @@ export const PerfilImageModal = ({ isOpen, onClose, image, onSubmit, mode }) => 
             data.append("image", formData.file);
         }
 
-        // console.log("FormData en envío:");
-        // data.forEach((value, key) => console.log(`${key}:`, value));
+        // // console.log("FormData en envío:");
+        // data.forEach((value, key) => // console.log(`${key}:`, value));
 
         onSubmit(data);
     };

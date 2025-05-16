@@ -23,7 +23,7 @@ const transformRanksArray = (ranks) => {
  */
 export const createRank = async (rankData) => {
     for (let pair of rankData.entries()) {
-        // console.log(pair[0] + ': ' + pair[1]);
+        // // console.log(pair[0] + ': ' + pair[1]);
     }
     
     try {
@@ -46,7 +46,7 @@ export const createRank = async (rankData) => {
 export const getAllRanks = async () => {
     try {
         const response = await axios.get(API_BASE_URL);
-        // console.log(transformRanksArray(response.data))
+        // // console.log(transformRanksArray(response.data))
         return transformRanksArray(response.data);
     } catch (error) {
         handleError(error, 'Error al obtener los rangos');

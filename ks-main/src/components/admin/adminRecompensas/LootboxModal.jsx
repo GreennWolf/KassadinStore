@@ -120,11 +120,11 @@ export function LootboxModal({ isOpen, onClose, lootbox, onSubmit, mode, ranks =
   
       let preparedItems = [...formData.items];
   
-      // console.log("🔍 Buscando cupones existentes...");
+      // // console.log("🔍 Buscando cupones existentes...");
       let existingPresets = [];
       try {
         existingPresets = await getRewardCouponPresetByType("lootbox");
-        // console.log("✅ Cupones existentes obtenidos:", existingPresets);
+        // // console.log("✅ Cupones existentes obtenidos:", existingPresets);
       } catch (error) {
         console.error("⚠️ Error obteniendo cupones existentes:", error);
         toast.error("No se pudo verificar los cupones existentes.");
@@ -182,7 +182,7 @@ export function LootboxModal({ isOpen, onClose, lootbox, onSubmit, mode, ranks =
                 ...(item.details.itemId ? { itemId: item.details.itemId } : {}),
                 ...(item.details.rpId ? { rpId: item.details.rpId } : {}),
               });
-              // console.log('enviado',{ ...item, itemId: createdFragmentPreset.data_id } , createdFragmentPreset);
+              // // console.log('enviado',{ ...item, itemId: createdFragmentPreset.data_id } , createdFragmentPreset);
               return { ...item, itemId: createdFragmentPreset.data._id };
             } catch (error) {
               console.error("❌ Error al crear el preset del fragmento:", error);
@@ -194,7 +194,7 @@ export function LootboxModal({ isOpen, onClose, lootbox, onSubmit, mode, ranks =
         })
       );
   
-      // console.log("🚀 Enviando lootbox con los siguientes items:", updatedItems);
+      // // console.log("🚀 Enviando lootbox con los siguientes items:", updatedItems);
       preparedItems = updatedItems.filter((item) => item !== null);
   
       if (preparedItems.length === 0) {
@@ -217,7 +217,7 @@ export function LootboxModal({ isOpen, onClose, lootbox, onSubmit, mode, ranks =
         submitData.append("image", formData.file);
       }
   
-      // console.log("🚀 Enviando lootbox con los siguientes items:", preparedItems);
+      // // console.log("🚀 Enviando lootbox con los siguientes items:", preparedItems);
   
       await onSubmit(submitData);
   
@@ -231,7 +231,7 @@ export function LootboxModal({ isOpen, onClose, lootbox, onSubmit, mode, ranks =
   };  
   
   const resetForm = () => {
-    // console.log("🧹 Reseteando formulario...");
+    // // console.log("🧹 Reseteando formulario...");
 
     setFormData({
       name: "",
@@ -335,7 +335,7 @@ export function LootboxModal({ isOpen, onClose, lootbox, onSubmit, mode, ranks =
   };
 
   const getItemDisplay = (item) => {
-    // console.log(item);
+    // // console.log(item);
     switch (item.itemType) {
       case 'Skin':
       case 'Item':

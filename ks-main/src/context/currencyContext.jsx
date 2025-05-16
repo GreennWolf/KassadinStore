@@ -17,7 +17,7 @@ export function CurrencyProvider({ children }) {
     const updateSelectedCurrency = (currency) => {
         setSelectedCurrency(currency);
         localStorage.setItem('selectedCurrency', JSON.stringify(currency));
-        // console.log(currency)
+        // // console.log(currency)
     };
 
     const clearSelectedCurrency = () => {

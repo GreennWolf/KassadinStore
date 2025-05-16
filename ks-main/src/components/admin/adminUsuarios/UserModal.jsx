@@ -43,7 +43,7 @@ export const UserModal = ({ isOpen, onClose, user, onSubmit, mode }) => {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        // console.log("Final formData before submit:", formData); // Verifica aquí
+        // // console.log("Final formData before submit:", formData); // Verifica aquí
         onSubmit(formData);
     };
 
@@ -117,7 +117,7 @@ export const UserModal = ({ isOpen, onClose, user, onSubmit, mode }) => {
                             value={formData.role}
                             onValueChange={(value) => {
                               setFormData({ ...formData, role: value })
-                            //   console.log(formData)
+                            //   // console.log(formData)
                             }}
                         >
                             <SelectTrigger>

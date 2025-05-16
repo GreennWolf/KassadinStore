@@ -17,9 +17,9 @@ export const ProductCard = ({
   skinSearchTerm = '' // Nuevo prop para búsqueda de skins
 }) => {
   const [price, setPrice] = useState('N/A');
-  console.log(category)
+  // console.log(category)
   // Log para depuración
-  console.log("ProductCard props:", { 
+  // console.log("ProductCard props:", { 
     category, 
     productType: category === 'unrankeds' ? 'unranked' : (product.NombreSkin ? 'skin' : 'item'),
     hasDetailClick: !!onDetailClick,
@@ -54,11 +54,11 @@ export const ProductCard = ({
   // Selecciona una imagen aleatoria de skins para unrankeds o la skinSearchTerm si existe
   const getUnrankedImageSrc = () => {
     if (!product.skins || !Array.isArray(product.skins) || product.skins.length === 0) {
-      console.log("Sin skins o array inválido:", product.skins);
+      // console.log("Sin skins o array inválido:", product.skins);
       return product.srcLocal || product.srcWeb || '/placeholder.png';
     }
     
-    console.log("Skins array:", product.skins.length, "skins disponibles");
+    // console.log("Skins array:", product.skins.length, "skins disponibles");
     
     // Si hay búsqueda de skin, intentar encontrar la skin que coincida
     if (skinSearchTerm) {
@@ -69,7 +69,7 @@ export const ProductCard = ({
                championName.toLowerCase().includes(skinSearchTerm.toLowerCase());
       });
       
-      console.log("Coincidencias con búsqueda:", matchingSkins.length);
+      // console.log("Coincidencias con búsqueda:", matchingSkins.length);
       
       if (matchingSkins.length > 0) {
         // Usar la primera skin que coincida
@@ -86,7 +86,7 @@ export const ProductCard = ({
   const getImageSrc = () => {
     if (getProductType() === 'unranked') {
       const src = getUnrankedImageSrc();
-      console.log("Imagen seleccionada para unranked:", src);
+      // console.log("Imagen seleccionada para unranked:", src);
       return src;
     }
     return product.srcLocal || product.srcWeb;

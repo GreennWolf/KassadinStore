@@ -302,12 +302,12 @@ export default function Checkout() {
   const onSubmit = async (values) => {
     setIsSubmitting(true);
     try {
-      console.log('CHECKOUT - Inicio proceso de compra');
-      console.log('CHECKOUT - Items en el carrito:', cartItems);
+      // console.log('CHECKOUT - Inicio proceso de compra');
+      // console.log('CHECKOUT - Items en el carrito:', cartItems);
       
       // Verificar si hay unrankeds en el carrito
       const unrankedItems = cartItems.filter(item => item.isUnranked === true || item.itemType === 'Unranked');
-      console.log('CHECKOUT - Items unranked en el carrito:', unrankedItems);
+      // console.log('CHECKOUT - Items unranked en el carrito:', unrankedItems);
       
       const data = {
         items: cartItems,
@@ -323,14 +323,14 @@ export default function Checkout() {
         couponItems: cartItems.filter(item => item.selectedForCoupon > 0).map(item => item._id)
       };
       
-      console.log('CHECKOUT - Datos a enviar al backend:', data);
-      console.log('CHECKOUT - Llamando a createPurchase');
+      // console.log('CHECKOUT - Datos a enviar al backend:', data);
+      // console.log('CHECKOUT - Llamando a createPurchase');
       const result = await createPurchase(data);
-      console.log('CHECKOUT - Respuesta de createPurchase:', result);
+      // console.log('CHECKOUT - Respuesta de createPurchase:', result);
       
-      console.log('CHECKOUT - Limpiando carrito');
+      // console.log('CHECKOUT - Limpiando carrito');
       clearCart();
-      console.log('CHECKOUT - Avanzando al siguiente paso');
+      // console.log('CHECKOUT - Avanzando al siguiente paso');
       handleNext();
     } catch (error) {
       console.error("CHECKOUT - Error creating purchase:", error);

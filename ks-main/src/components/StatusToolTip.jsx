@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 
 export const StatusToolTip = ({ status }) => {
     const [isVisible, setIsVisible] = useState(false);
-    // console.log(status)
+    // // console.log(status)
 
     if (!status.description) {
         return <span>{status.status}</span>;

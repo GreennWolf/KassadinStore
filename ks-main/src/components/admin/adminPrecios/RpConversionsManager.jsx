@@ -186,7 +186,7 @@ export function RpConversionsManager() {
                                     <DropdownMenuContent className="bg-black" align="end">
                                         <DropdownMenuItem
                                             onClick={() => {
-                                                console.log(conversion)
+                                                // console.log(conversion)
                                                 setSelectedConversion(conversion);
                                                 setIsEditModalOpen(true);
                                             }}

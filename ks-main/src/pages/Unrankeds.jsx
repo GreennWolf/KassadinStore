@@ -78,14 +78,14 @@ const Unrankeds = () => {
             includeSearch: true // Habilitar búsqueda inclusiva para términos con espacios
           };
           
-          console.log("Búsqueda con parámetros:", params);
+          // console.log("Búsqueda con parámetros:", params);
           
           const [accountsData, rpConversionsData] = await Promise.all([
             getAllUnrankeds(params),
             getAllRPPriceConversions()
           ]);
           
-          console.log(`Cuentas encontradas: ${accountsData.data?.length || 0}`);
+          // console.log(`Cuentas encontradas: ${accountsData.data?.length || 0}`);
           setAccounts(accountsData.data || []);
           setRpConversions(rpConversionsData || []);
         } catch (error) {
@@ -241,7 +241,7 @@ const Unrankeds = () => {
       const matchingSkins = scoredSkins.filter(item => item.score > 0);
       
       if (matchingSkins.length > 0) {
-        console.log(`Encontradas ${matchingSkins.length} skins coincidentes para "${searchTerm}"`);
+        // console.log(`Encontradas ${matchingSkins.length} skins coincidentes para "${searchTerm}"`);
         
         // Tomar la mejor coincidencia o una aleatoria entre las mejores si hay varias con la misma puntuación
         const topScore = matchingSkins[0].score;
@@ -250,7 +250,7 @@ const Unrankeds = () => {
         // Seleccionar una aleatoriamente entre las mejores
         const selectedMatch = bestMatches[Math.floor(Math.random() * bestMatches.length)];
         
-        console.log(`Mostrando skin ${selectedMatch.skin.NombreSkin || 'sin nombre'}`);
+        // console.log(`Mostrando skin ${selectedMatch.skin.NombreSkin || 'sin nombre'}`);
         
         return selectedMatch.skin.srcLocal || 
                selectedMatch.skin.imageUrl || 

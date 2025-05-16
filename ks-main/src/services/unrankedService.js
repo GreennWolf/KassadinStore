@@ -49,7 +49,7 @@ const cleanSkinIds = (skinIds) => {
 
 export const createUnranked = async (formData) => {
     try {
-        console.log('Preparando envío para crear cuenta unranked');
+        // console.log('Preparando envío para crear cuenta unranked');
         
         // Verificar que formData sea un FormData
         if (!(formData instanceof FormData)) {
@@ -78,13 +78,13 @@ export const createUnranked = async (formData) => {
         const skinEntries = formData.getAll('skins[]');
         
         // Mostrar todos los campos para depuración
-        console.log('Campos en FormData:');
+        // console.log('Campos en FormData:');
         for (let [key, value] of formData.entries()) {
-            console.log(`${key}: ${value instanceof File ? 'File: ' + value.name : value}`);
+            // console.log(`${key}: ${value instanceof File ? 'File: ' + value.name : value}`);
         }
         
         // Enviar al servidor
-        console.log('Enviando FormData al servidor');
+        // console.log('Enviando FormData al servidor');
         const response = await axios.post(`${API_BASE_URL}/unrankeds`, formData, {
             headers: {
                 'Content-Type': 'multipart/form-data'
@@ -103,16 +103,16 @@ export const createUnranked = async (formData) => {
 
 export const updateUnranked = async (id, unrankedData) => {
     try {
-        console.log('Preparando envío para actualizar cuenta unranked');
+        // console.log('Preparando envío para actualizar cuenta unranked');
         
         // Si es un FormData
         if (unrankedData instanceof FormData) {
-            console.log('Actualizando con FormData');
+            // console.log('Actualizando con FormData');
             
             // Mostrar campos para depuración
-            console.log('Campos en FormData:');
+            // console.log('Campos en FormData:');
             for (let [key, value] of unrankedData.entries()) {
-                console.log(`${key}: ${value instanceof File ? 'File: ' + value.name : value}`);
+                // console.log(`${key}: ${value instanceof File ? 'File: ' + value.name : value}`);
             }
             
             // Enviar directamente - ahora manejamos correctamente skins[] en el frontend
@@ -125,7 +125,7 @@ export const updateUnranked = async (id, unrankedData) => {
             return transformImageUrls(response.data);
         } else {
             // Si es un objeto JSON
-            console.log('Actualizando con JSON:', unrankedData);
+            // console.log('Actualizando con JSON:', unrankedData);
             
             // Asegurar que skins es un array en el formato correcto
             if (unrankedData.skins && Array.isArray(unrankedData.skins)) {
@@ -165,7 +165,7 @@ export const getAllUnrankeds = async (params = {}) => {
             includeSearch = false // Para búsqueda inclusiva
         } = params;
 
-        console.log("Parámetros de búsqueda en unrankedService:", params);
+        // console.log("Parámetros de búsqueda en unrankedService:", params);
 
         // Preparar la búsqueda inclusiva y manejar espacios correctamente
         let useInclusiveSearch = includeSearch || false;
@@ -175,13 +175,13 @@ export const getAllUnrankeds = async (params = {}) => {
         // Siempre activar búsqueda inclusiva si hay espacios en cualquier término
         if ((search && search.includes(' ')) || (skinSearch && skinSearch.includes(' '))) {
             useInclusiveSearch = true;
-            console.log("Activando búsqueda inclusiva automáticamente debido a espacios");
+            // console.log("Activando búsqueda inclusiva automáticamente debido a espacios");
         }
         
         // Depuración de los términos de búsqueda
-        if (search) console.log(`Búsqueda general: "${search}"`);
-        if (skinSearch) console.log(`Búsqueda de skins: "${skinSearch}"`);
-        console.log(`Búsqueda inclusiva: ${useInclusiveSearch ? 'Activada' : 'Desactivada'}`);
+        if (search) // console.log(`Búsqueda general: "${search}"`);
+        if (skinSearch) // console.log(`Búsqueda de skins: "${skinSearch}"`);
+        // console.log(`Búsqueda inclusiva: ${useInclusiveSearch ? 'Activada' : 'Desactivada'}`);
 
         const queryParams = new URLSearchParams({
             page: page.toString(),

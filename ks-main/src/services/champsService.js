@@ -144,7 +144,7 @@ export const getAllSkins = async (params) => {
         } = params;
         
         // Log de depuración para ver los parámetros de búsqueda
-        console.log('Parámetros de búsqueda getAllSkins:', { page, limit, search, showAll, ids });
+        // console.log('Parámetros de búsqueda getAllSkins:', { page, limit, search, showAll, ids });
         
         const queryParams = new URLSearchParams({
             page: page.toString(),
@@ -162,12 +162,12 @@ export const getAllSkins = async (params) => {
         }
 
         const url = `${API_BASE_URL}/skins?${queryParams}`;
-        console.log('URL de búsqueda:', url);
+        // console.log('URL de búsqueda:', url);
         
         const response = await axios.get(url);
         
         // Log de los resultados obtenidos
-        console.log(`Resultados obtenidos: ${response.data?.data?.length || 0} skins`);
+        // console.log(`Resultados obtenidos: ${response.data?.data?.length || 0} skins`);
         
         // Transformar las URLs de las imágenes
         if (response.data && Array.isArray(response.data.data)) {
@@ -236,12 +236,12 @@ export const createSkin = async (skinData) => {
         }
 
         // Log para debugging
-        // console.log('Sending form data:');
+        // // console.log('Sending form data:');
         for (let pair of formData.entries()) {
-            // console.log(pair[0] + ': ' + (pair[1] instanceof File ? pair[1].name : pair[1]));
+            // // console.log(pair[0] + ': ' + (pair[1] instanceof File ? pair[1].name : pair[1]));
         }
 
-        // console.log(skinData , 'Skin data service')
+        // // console.log(skinData , 'Skin data service')
 
         const response = await axios.post(`${API_BASE_URL}/skins/create`, formData, {
             headers: {
@@ -281,9 +281,9 @@ export const updateSkin = async (id, skinData) => {
             formData.append('skinImage', skinData.src); // Cambiado a 'skinImage'
         }
 
-        // console.log('Updating skin with data:');
+        // // console.log('Updating skin with data:');
         for (let pair of formData.entries()) {
-            // console.log(pair[0] + ': ' + pair[1]);
+            // // console.log(pair[0] + ': ' + pair[1]);
         }
 
         const response = await axios.put(`${API_BASE_URL}/skins/update/${id}`, formData, {
@@ -426,7 +426,7 @@ export const getChampionImageUrl = (championName, fallbackName = 'default') => {
     const mappedName = nameMapping[championName];
     if (mappedName) {
       imageUrl = `${import.meta.env.VITE_API_URL}/champions/${mappedName}.png`;
-      console.log(`Intentando nombre alternativo para ${championName}: ${mappedName}`);
+      // console.log(`Intentando nombre alternativo para ${championName}: ${mappedName}`);
     } else {
       // Si no hay mapeo, usar el respaldo predeterminado
       imageUrl = `${import.meta.env.VITE_API_URL}/champions/${fallbackName}.png`;

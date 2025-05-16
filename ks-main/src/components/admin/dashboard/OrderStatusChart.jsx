@@ -35,11 +35,11 @@ export const OrderStatusChart = ({ timeRange, customDateRange }) => {
           data = await dashboardService.getDashboardStats(timeRange);
         }
         
-        console.log("Datos recibidos del backend:", data?.ordenesStats);
+        // console.log("Datos recibidos del backend:", data?.ordenesStats);
         
         // Verificar si existen estadosGlobales
         if (data?.ordenesStats?.estadosGlobales && !isEmptyObject(data.ordenesStats.estadosGlobales)) {
-          console.log("Usando estadosGlobales:", data.ordenesStats.estadosGlobales);
+          // console.log("Usando estadosGlobales:", data.ordenesStats.estadosGlobales);
           
           // Transformar estadosGlobales a formato para gráficos
           const statusData = Object.entries(data.ordenesStats.estadosGlobales)
@@ -56,22 +56,22 @@ export const OrderStatusChart = ({ timeRange, customDateRange }) => {
             .sort((a, b) => b.value - a.value);
           
           setChartData(statusData);
-          console.log("Chart data generado desde estadosGlobales:", statusData);
+          // console.log("Chart data generado desde estadosGlobales:", statusData);
         } 
         // Plan alternativo: si no existe estadosGlobales, agregar manualmente
         else if (data?.ordenesStats?.porEstado && !isEmptyObject(data.ordenesStats.porEstado)) {
-          console.log("Agregando manualmente desde porEstado:", data.ordenesStats.porEstado);
+          // console.log("Agregando manualmente desde porEstado:", data.ordenesStats.porEstado);
           
           const aggregatedStatuses = {};
           
           // Recorrer todas las monedas y extraer/agregar los estados
           Object.entries(data.ordenesStats.porEstado).forEach(([currencyCode, currencyData]) => {
-            console.log(`Procesando moneda ${currencyCode}:`, currencyData);
+            // console.log(`Procesando moneda ${currencyCode}:`, currencyData);
             
             if (currencyData && currencyData.statuses) {
               // Recorrer los estados de esta moneda
               Object.entries(currencyData.statuses).forEach(([statusName, statusData]) => {
-                console.log(`  - Estado ${statusName}:`, statusData);
+                // console.log(`  - Estado ${statusName}:`, statusData);
                 
                 if (!aggregatedStatuses[statusName]) {
                   aggregatedStatuses[statusName] = {
@@ -92,7 +92,7 @@ export const OrderStatusChart = ({ timeRange, customDateRange }) => {
                 aggregatedStatuses[statusName].amount += statusData.total || 0;
               });
             } else {
-              console.log(`La moneda ${currencyCode} no tiene estados o está mal formateada`);
+              // console.log(`La moneda ${currencyCode} no tiene estados o está mal formateada`);
             }
           });
           
@@ -101,9 +101,9 @@ export const OrderStatusChart = ({ timeRange, customDateRange }) => {
             .sort((a, b) => b.value - a.value);
           
           setChartData(statusesArray);
-          console.log("Chart data generado manualmente:", statusesArray);
+          // console.log("Chart data generado manualmente:", statusesArray);
         } else {
-          console.log("No se encontraron datos de estados", {
+          // console.log("No se encontraron datos de estados", {
             estadosGlobales: data?.ordenesStats?.estadosGlobales,
             porEstado: data?.ordenesStats?.porEstado
           });

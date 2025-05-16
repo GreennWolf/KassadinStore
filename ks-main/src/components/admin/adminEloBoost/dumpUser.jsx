@@ -6,9 +6,9 @@ export default function DumpUser() {
     const userJson = localStorage.getItem('user');
     if (userJson) {
       const user = JSON.parse(userJson);
-      console.log('User in localStorage:', user);
+      // console.log('User in localStorage:', user);
     } else {
-      console.log('No user found in localStorage');
+      // console.log('No user found in localStorage');
     }
   }, []);
 

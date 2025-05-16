@@ -15,12 +15,12 @@ interface RewardsCatalogProps {
 }
 
 export const RewardsCatalog = ({ items, mode }: RewardsCatalogProps) => {
-  // console.log('RewardsCatalog rendering with items:', items); // Debug log
+  // // console.log('RewardsCatalog rendering with items:', items); // Debug log
   
   return (
     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
       {items.map((item, index) => {
-        // console.log('Rendering item:', item); // Debug log for each item
+        // // console.log('Rendering item:', item); // Debug log for each item
         return (
           <motion.div
             key={item.id}

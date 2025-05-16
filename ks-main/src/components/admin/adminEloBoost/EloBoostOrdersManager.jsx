@@ -201,7 +201,7 @@ const EloBoostOrdersManager = () => {
       
       // Volver a cargar todas las órdenes para asegurarnos de tener datos frescos
       if (status === 'processing' || status === 'completed') {
-        console.log("Actualizando órdenes...");
+        // console.log("Actualizando órdenes...");
         setTimeout(() => {
           fetchOrders();
         }, 500);

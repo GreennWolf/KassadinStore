@@ -51,7 +51,7 @@ export const OrdersChart = ({ timeRange }) => {
           } else {
             // Si no hay datos de tendencia, mostrar mensaje sin datos
             setChartData([]);
-            console.log("No hay datos de tendencia disponibles");
+            // console.log("No hay datos de tendencia disponibles");
           }
         } catch (trendError) {
           console.error('Error al cargar tendencias:', trendError);

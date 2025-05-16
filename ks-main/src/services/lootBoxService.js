@@ -230,7 +230,7 @@ export const openLootbox = async (lootboxId) => {
     // Transformar los datos del item recibido para URLs correctas
     const transformedItemReceived = transformItemDetails(response.data.itemReceived);
     
-    console.log("Item transformado:", transformedItemReceived);
+    // console.log("Item transformado:", transformedItemReceived);
     
     // Retornamos data con un flag para animaciones e item transformado
     return {

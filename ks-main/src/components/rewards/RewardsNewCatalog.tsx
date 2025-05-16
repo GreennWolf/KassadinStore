@@ -15,14 +15,14 @@ interface RewardsNewCatalogProps {
 }
 
 export const RewardsNewCatalog = ({ items, mode }: RewardsNewCatalogProps) => {
-  // console.log('RewardsNewCatalog rendering with items:', items); // Debug log
+  // // console.log('RewardsNewCatalog rendering with items:', items); // Debug log
   
   return (
     <div className="space-y-4">
       <h2 className="text-2xl font-bold text-white mb-6">Recompensas Disponibles</h2>
       <div className="grid grid-cols-1 gap-4">
         {items.map((item, index) => {
-          // console.log('Rendering item:', item); // Debug log for each item
+          // // console.log('Rendering item:', item); // Debug log for each item
           return (
             <motion.div
               key={item.id}

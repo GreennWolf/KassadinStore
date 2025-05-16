@@ -53,7 +53,7 @@ const formSchema = z.object({
 
 export default function EloboostCheckout() {
   const [step, setStep] = useState(1);
-  console.log("EloboostCheckout renderizado - Step actual:", step);
+  // console.log("EloboostCheckout renderizado - Step actual:", step);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currencies, setCurrencies] = useState([]);
   const [paymentMethods, setPaymentMethods] = useState([]);
@@ -274,7 +274,7 @@ export default function EloboostCheckout() {
         const token = localStorage.getItem("token");
         
         // 1. Primero crear la orden de boost
-        console.log("Creando orden de EloBoost con los datos recopilados");
+        // console.log("Creando orden de EloBoost con los datos recopilados");
         const orderResponse = await createEloBoostOrder({
           ...boostData,
           userId: JSON.parse(localStorage.getItem("user"))._id
@@ -442,7 +442,7 @@ export default function EloboostCheckout() {
               <Form {...form}>
                 <form onSubmit={(e) => {
                     e.preventDefault();
-                    console.log("Formulario paso 1 enviado");
+                    // console.log("Formulario paso 1 enviado");
                     
                     const formData = {
                       riotName: form.getValues("riotName"),
@@ -450,38 +450,38 @@ export default function EloboostCheckout() {
                       server: form.getValues("server"),
                     };
                     
-                    console.log("Datos del formulario:", formData);
+                    // console.log("Datos del formulario:", formData);
                     
                     // Validar manualmente
                     let hasErrors = false;
                     
                     if (!formData.riotName || formData.riotName.length < 3 || !formData.riotName.includes("#")) {
-                      console.log("Error en Riot Name");
+                      // console.log("Error en Riot Name");
                       toast.error("Por favor ingresa un Riot Name válido (incluyendo #)");
                       hasErrors = true;
                     }
                     
                     if (!formData.discordName || formData.discordName.length < 3) {
-                      console.log("Error en Discord Name");
+                      // console.log("Error en Discord Name");
                       toast.error("Por favor ingresa un Discord Name válido");
                       hasErrors = true;
                     }
                     
                     if (!formData.server) {
-                      console.log("Error en Server");
+                      // console.log("Error en Server");
                       toast.error("Por favor selecciona un servidor");
                       hasErrors = true;
                     }
                     
                     if (hasErrors) {
-                      console.log("Hay errores en el formulario");
+                      // console.log("Hay errores en el formulario");
                       return;
                     }
                     
                     // Guardar datos y avanzar
-                    console.log("Guardando datos en sessionStorage");
+                    // console.log("Guardando datos en sessionStorage");
                     sessionStorage.setItem('eloBoostFormData', JSON.stringify(formData));
-                    console.log("Avanzando al siguiente paso");
+                    // console.log("Avanzando al siguiente paso");
                     handleNext();
                   }} 
                   className="space-y-4"
@@ -521,7 +521,7 @@ export default function EloboostCheckout() {
                       className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-black px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                       value={form.watch("server") || ""}
                       onChange={(e) => {
-                        console.log("Cambio de servidor:", e.target.value);
+                        // console.log("Cambio de servidor:", e.target.value);
                         form.setValue("server", e.target.value);
                       }}
                       required
@@ -553,39 +553,39 @@ export default function EloboostCheckout() {
               <Form {...form}>
                 <form onSubmit={(e) => {
                     e.preventDefault();
-                    console.log("Formulario paso 2 enviado");
+                    // console.log("Formulario paso 2 enviado");
                     
                     const accountData = {
                       username: form.getValues("accountUsername"),
                       password: form.getValues("accountPassword"),
                     };
                     
-                    console.log("Datos de cuenta:", accountData);
+                    // console.log("Datos de cuenta:", accountData);
                     
                     // Validar manualmente
                     let hasErrors = false;
                     
                     if (!accountData.username || accountData.username.length < 3) {
-                      console.log("Error en Usuario");
+                      // console.log("Error en Usuario");
                       toast.error("Por favor ingresa un usuario válido");
                       hasErrors = true;
                     }
                     
                     if (!accountData.password || accountData.password.length < 6) {
-                      console.log("Error en Contraseña");
+                      // console.log("Error en Contraseña");
                       toast.error("La contraseña debe tener al menos 6 caracteres");
                       hasErrors = true;
                     }
                     
                     if (hasErrors) {
-                      console.log("Hay errores en el formulario");
+                      // console.log("Hay errores en el formulario");
                       return;
                     }
                     
                     // Guardar datos y avanzar
-                    console.log("Guardando credenciales en sessionStorage");
+                    // console.log("Guardando credenciales en sessionStorage");
                     sessionStorage.setItem('eloBoostAccountDetails', JSON.stringify(accountData));
-                    console.log("Avanzando al siguiente paso");
+                    // console.log("Avanzando al siguiente paso");
                     handleNext();
                   }}
                   className="space-y-4"
@@ -671,38 +671,38 @@ export default function EloboostCheckout() {
               <Form {...form}>
                 <form onSubmit={(e) => {
                     e.preventDefault();
-                    console.log("Formulario paso 3 enviado");
+                    // console.log("Formulario paso 3 enviado");
                     
-                    console.log("Divisa seleccionada:", selectedCurrency);
-                    console.log("Método de pago:", form.getValues("paymentMethod"));
+                    // console.log("Divisa seleccionada:", selectedCurrency);
+                    // console.log("Método de pago:", form.getValues("paymentMethod"));
                     
                     // Validar manualmente
                     let hasErrors = false;
                     
                     if (!selectedCurrency || !selectedCurrency._id) {
-                      console.log("Error en Divisa");
+                      // console.log("Error en Divisa");
                       toast.error("Por favor selecciona una divisa");
                       hasErrors = true;
                     }
                     
                     if (!form.getValues("paymentMethod")) {
-                      console.log("Error en Método de Pago");
+                      // console.log("Error en Método de Pago");
                       toast.error("Por favor selecciona un método de pago");
                       hasErrors = true;
                     }
                     
                     if (hasErrors) {
-                      console.log("Hay errores en el formulario");
+                      // console.log("Hay errores en el formulario");
                       return;
                     }
                     
                     // Guardar datos y avanzar
-                    console.log("Guardando datos de pago en sessionStorage");
+                    // console.log("Guardando datos de pago en sessionStorage");
                     sessionStorage.setItem('eloBoostPaymentDetails', JSON.stringify({
                       paymentMethod: form.getValues("paymentMethod"),
                       currencyId: selectedCurrency._id
                     }));
-                    console.log("Avanzando al siguiente paso");
+                    // console.log("Avanzando al siguiente paso");
                     handleNext();
                   }}
                   className="space-y-4"
@@ -716,7 +716,7 @@ export default function EloboostCheckout() {
                       className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-black px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                       value={selectedCurrency._id || ""}
                       onChange={(e) => {
-                        console.log("Cambio de divisa:", e.target.value);
+                        // console.log("Cambio de divisa:", e.target.value);
                         form.setValue("currency", e.target.value);
                         updateSelectedCurrency(currencies.find(c => c._id === e.target.value));
                       }}
@@ -743,7 +743,7 @@ export default function EloboostCheckout() {
                       className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-black px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                       value={form.watch("paymentMethod") || ""}
                       onChange={(e) => {
-                        console.log("Cambio de método de pago:", e.target.value);
+                        // console.log("Cambio de método de pago:", e.target.value);
                         form.setValue("paymentMethod", e.target.value);
                       }}
                       disabled={!selectedCurrency}
@@ -806,7 +806,7 @@ export default function EloboostCheckout() {
                       <Button type="button" variant="outline" onClick={handleBack}>Atrás</Button>
                       <Button 
                         type="submit" 
-                        onClick={() => console.log("Botón Continuar a la confirmación clickeado")}
+                        onClick={() => // console.log("Botón Continuar a la confirmación clickeado")}
                       >
                         Continuar a la confirmación
                       </Button>
@@ -820,10 +820,10 @@ export default function EloboostCheckout() {
               <Form {...form}>
                 <form onSubmit={async (e) => {
                     e.preventDefault();
-                    console.log("Formulario paso 4 enviado");
+                    // console.log("Formulario paso 4 enviado");
                     
                     if (!receiptFile) {
-                      console.log("Error: No hay comprobante de pago");
+                      // console.log("Error: No hay comprobante de pago");
                       toast.error("Por favor sube un comprobante de pago");
                       return;
                     }
@@ -835,14 +835,14 @@ export default function EloboostCheckout() {
                     const accountDetails = JSON.parse(sessionStorage.getItem('eloBoostAccountDetails') || '{}');
                     const paymentDetails = JSON.parse(sessionStorage.getItem('eloBoostPaymentDetails') || '{}');
                     
-                    console.log("Datos de formulario:", formData);
-                    console.log("Detalles de cuenta:", accountDetails);
-                    console.log("Detalles de pago:", paymentDetails);
+                    // console.log("Datos de formulario:", formData);
+                    // console.log("Detalles de cuenta:", accountDetails);
+                    // console.log("Detalles de pago:", paymentDetails);
                     
                     // Proceso de creación de orden y compra
                     const completeProcess = async () => {
                       try {
-                        console.log("Creando orden de EloBoost con los datos recopilados");
+                        // console.log("Creando orden de EloBoost con los datos recopilados");
                         const token = localStorage.getItem("token");
                         
                         // 1. Primero crear la orden de boost
@@ -863,21 +863,21 @@ export default function EloboostCheckout() {
                         
                         const newOrderId = orderResponse.order._id;
                         setOrderId(newOrderId);
-                        console.log("Orden creada con ID:", newOrderId);
+                        // console.log("Orden creada con ID:", newOrderId);
                         
                         // 2. Actualizar con detalles de la cuenta SOLO si no es duo queue
                         if (!boostData?.duoQueue) {
-                          console.log("Actualizando detalles de cuenta");
+                          // console.log("Actualizando detalles de cuenta");
                           await updateAccountDetails(newOrderId, {
                             username: accountDetails.username,
                             password: accountDetails.password
                           });
                         } else {
-                          console.log("Saltando actualización de detalles de cuenta (duo queue)");
+                          // console.log("Saltando actualización de detalles de cuenta (duo queue)");
                         }
                         
                         // 3. Finalmente crear la compra
-                        console.log("Creando compra");
+                        // console.log("Creando compra");
                         const purchaseData = {
                           orderId: newOrderId,
                           paymentMethodId: paymentDetails.paymentMethod,
@@ -892,16 +892,16 @@ export default function EloboostCheckout() {
                         await createPurchase(purchaseData);
                         
                         // Limpiar sessionStorage
-                        console.log("Limpiando datos de sesión");
+                        // console.log("Limpiando datos de sesión");
                         sessionStorage.removeItem('eloBoostData');
                         sessionStorage.removeItem('eloBoostFormData');
                         sessionStorage.removeItem('eloBoostAccountDetails');
                         sessionStorage.removeItem('eloBoostPaymentDetails');
                         
-                        console.log("Proceso completado con éxito");
-                        console.log("Estado actual:", step);
+                        // console.log("Proceso completado con éxito");
+                        // console.log("Estado actual:", step);
                         handleNext();
-                        console.log("Próximo paso después de handleNext:", step + 1);
+                        // console.log("Próximo paso después de handleNext:", step + 1);
                       } catch (error) {
                         console.error("Error en el proceso:", error);
                         setIsSubmitting(false);
@@ -1045,7 +1045,7 @@ export default function EloboostCheckout() {
                       <Button 
                         type="submit" 
                         disabled={!receiptFile || isSubmitting}
-                        onClick={() => console.log("Botón Completar Compra clickeado")}
+                        onClick={() => // console.log("Botón Completar Compra clickeado")}
                       >
                         {isSubmitting ? "Procesando..." : "Completar Compra"}
                       </Button>

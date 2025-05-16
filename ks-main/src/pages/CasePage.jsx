@@ -95,7 +95,7 @@ const formatDropRate = (dropRate) => {
 
 // Función mejorada para encontrar el índice del item ganado en la lista de items disponibles
 function findExactItemIndex(lootboxItems, targetItem) {
-  // console.log("🔍 Buscando ítem entre opciones:", targetItem);
+  // // console.log("🔍 Buscando ítem entre opciones:", targetItem);
   
   // Función auxiliar para extraer y normalizar ID
   const normalizeId = (item) => {
@@ -107,10 +107,10 @@ function findExactItemIndex(lootboxItems, targetItem) {
     return JSON.stringify(item);
   };
   
-  // console.log("💡 IDs disponibles en lootbox:", lootboxItems.map((item, i) => 
+  // // console.log("💡 IDs disponibles en lootbox:", lootboxItems.map((item, i) => 
   //   `[${i}] ${item.itemType}: ${normalizeId(item.itemId)}`
   // ));
-  // console.log("💡 ID buscado:", normalizeId(targetItem.itemId));
+  // // console.log("💡 ID buscado:", normalizeId(targetItem.itemId));
   
   return lootboxItems.findIndex((item) => {
     // Verificar tipo de ítem siempre primero
@@ -295,7 +295,7 @@ const CasePage = () => {
     const loadRewardImages = async () => {
       if (!lootbox || !lootbox.items || !lootbox.items.length) return;
       
-      console.log("=== INICIANDO CARGA DE IMÁGENES PARA FRAGMENTOS ===");
+      // console.log("=== INICIANDO CARGA DE IMÁGENES PARA FRAGMENTOS ===");
       
       // Buscar fragmentos específicos en la lootbox
       const fragmentsWithRewards = lootbox.items.filter(
@@ -305,7 +305,7 @@ const CasePage = () => {
       
       if (!fragmentsWithRewards.length) return;
       
-      console.log(`Encontrados ${fragmentsWithRewards.length} fragmentos específicos:`, 
+      // console.log(`Encontrados ${fragmentsWithRewards.length} fragmentos específicos:`, 
         fragmentsWithRewards.map(f => ({id: f.itemId, details: f.details})));
       
       setLoadingImages(true);
@@ -314,7 +314,7 @@ const CasePage = () => {
       // Cargamos cada fragmento individualmente
       for (const fragment of fragmentsWithRewards) {
         try {
-          console.log("Procesando fragmento:", fragment);
+          // console.log("Procesando fragmento:", fragment);
           
           // Identificar todos los posibles lugares donde podría estar el ID del item/skin
           const possibleIds = [];
@@ -351,32 +351,32 @@ const CasePage = () => {
             possibleIds.push({source: 'details.rewardId', id});
           }
           
-          console.log("IDs potenciales encontrados:", possibleIds);
+          // console.log("IDs potenciales encontrados:", possibleIds);
           
           // Si no encontramos ningún ID en details, usamos un enfoque heurístico conociendo el tipo
           if (!possibleIds.length) {
             // Determinamos el tipo de recompensa
             const rewardType = fragment.details?.rewardType || fragment.details?.fragmentReward;
             if (rewardType === "skin") {
-              console.log("Fragmento sin ID, pero tipo skin - intentando inferir por nombre");
+              // console.log("Fragmento sin ID, pero tipo skin - intentando inferir por nombre");
               // Buscamos skins por nombre
               try {
                 const skinName = fragment.details?.rewardName || fragment.details?.fragmentName || "Aatrox";
-                console.log(`Buscaremos skins relacionadas con: ${skinName}`);
+                // console.log(`Buscaremos skins relacionadas con: ${skinName}`);
                 
                 // SOLUCIÓN DIRECTA: cargar skin conocida por su ID
                 if (skinName.includes("Aatrox")) {
                   const skinData = await getSkinById("676c9858aa8abeca8327ee72");
                   if (skinData) {
-                    console.log("Skin Aatrox cargada con éxito:", skinData);
+                    // console.log("Skin Aatrox cargada con éxito:", skinData);
                     if (skinData.srcLocal) {
                       const imageUrl = `${API_BASE_IMAGE}/${skinData.srcLocal.replace(/\\/g, '/')}`;
-                      console.log("URL imagen generada:", imageUrl);
+                      // console.log("URL imagen generada:", imageUrl);
                       newRewardImages["676c9858aa8abeca8327ee72"] = imageUrl;
                       
                       // También asociamos esta imagen con el ID del fragmento para redundancia
                       if (fragment.itemId) {
-                        console.log("Asociando también al ID del fragmento:", fragment.itemId);
+                        // console.log("Asociando también al ID del fragmento:", fragment.itemId);
                         newRewardImages[fragment.itemId] = imageUrl;
                       }
                     }
@@ -392,10 +392,10 @@ const CasePage = () => {
           // Procesamos cada ID posible
           for (const {source, id} of possibleIds) {
             try {
-              console.log(`Intentando cargar con ${source}: ${id}`);
+              // console.log(`Intentando cargar con ${source}: ${id}`);
               
               if (newRewardImages[id]) {
-                console.log(`Imagen ya cargada previamente para ID: ${id}`);
+                // console.log(`Imagen ya cargada previamente para ID: ${id}`);
                 continue;
               }
               
@@ -403,9 +403,9 @@ const CasePage = () => {
               const rewardType = fragment.details?.rewardType || fragment.details?.fragmentReward;
               
               if (rewardType === "skin") {
-                console.log(`Cargando SKIN con ID: ${id}`);
+                // console.log(`Cargando SKIN con ID: ${id}`);
                 const skinData = await getSkinById(id);
-                console.log("Datos de skin recibidos:", skinData);
+                // console.log("Datos de skin recibidos:", skinData);
                 
                 if (skinData && skinData.srcLocal) {
                   const cleanPath = skinData.srcLocal.replace(/\\/g, '/');
@@ -413,7 +413,7 @@ const CasePage = () => {
                     ? cleanPath 
                     : `${API_BASE_IMAGE}/${cleanPath}`;
                     
-                  console.log(`URL imagen generada: ${imageUrl}`);
+                  // console.log(`URL imagen generada: ${imageUrl}`);
                   newRewardImages[id] = imageUrl;
                   
                   // También asociamos al ID del fragmento para redundancia
@@ -422,16 +422,16 @@ const CasePage = () => {
                   }
                 }
               } else {
-                console.log(`Cargando ITEM con ID: ${id}`);
+                // console.log(`Cargando ITEM con ID: ${id}`);
                 const itemData = await getItemById(id);
-                console.log("Datos de item recibidos:", itemData);
+                // console.log("Datos de item recibidos:", itemData);
                 
                 if (itemData && itemData.srcLocal) {
                   const cleanPath = itemData.srcLocal.replace(/\\/g, '/');
                   const baseUrl = itemData.type === 'chromas' ? API_BASE_CHROMAS : API_BASE_ITEMS;
                   const imageUrl = `${baseUrl}/${cleanPath}`;
                   
-                  console.log(`URL imagen generada: ${imageUrl}`);
+                  // console.log(`URL imagen generada: ${imageUrl}`);
                   newRewardImages[id] = imageUrl;
                   
                   // También asociamos al ID del fragmento para redundancia
@@ -449,8 +449,8 @@ const CasePage = () => {
         }
       }
       
-      console.log("=== IMÁGENES CARGADAS FINALES ===");
-      console.log("IDs de imágenes cargadas:", Object.keys(newRewardImages));
+      // console.log("=== IMÁGENES CARGADAS FINALES ===");
+      // console.log("IDs de imágenes cargadas:", Object.keys(newRewardImages));
       
       setRewardImages(newRewardImages);
       setLoadingImages(false);
@@ -529,7 +529,7 @@ const CasePage = () => {
       
       // Verificar si tenemos la imagen de recompensa en caché
       if (normalizedId && rewardImages[normalizedId]) {
-        console.log(`Usando imagen cacheada para fragmento específico: ${normalizedId}`);
+        // console.log(`Usando imagen cacheada para fragmento específico: ${normalizedId}`);
         return (
           <div className="relative overflow-hidden">
             <img
@@ -544,7 +544,7 @@ const CasePage = () => {
       // SOLUCIÓN ESPECÍFICA PARA AATROX
       // Verificar si tenemos la imagen cargada con el ID específico de Aatrox
       if (rewardImages["676c9858aa8abeca8327ee72"]) {
-        console.log(`Usando imagen cacheada para Aatrox: 676c9858aa8abeca8327ee72`);
+        // console.log(`Usando imagen cacheada para Aatrox: 676c9858aa8abeca8327ee72`);
         return (
           <div className="relative overflow-hidden">
             <img
@@ -557,7 +557,7 @@ const CasePage = () => {
       }
       
       // Si no tenemos la imagen en caché, mostrar imagen genérica con indicador de carga
-      console.log(`Sin imagen cacheada para fragmento específico con ID: ${normalizedId}`);
+      // console.log(`Sin imagen cacheada para fragmento específico con ID: ${normalizedId}`);
       return (
         <div className="relative overflow-hidden">
           <img
@@ -711,14 +711,14 @@ const CasePage = () => {
           const skinName = targetItem.details?.rewardName || targetItem.details?.name || "";
           if (skinName.includes("Aatrox") && !rewardImages["676c9858aa8abeca8327ee72"]) {
             try {
-              console.log("Cargando explícitamente skin de Aatrox con ID conocido");
+              // console.log("Cargando explícitamente skin de Aatrox con ID conocido");
               const aatroxSkin = await getSkinById("676c9858aa8abeca8327ee72");
               if (aatroxSkin && aatroxSkin.srcLocal) {
                 const cleanPath = aatroxSkin.srcLocal.replace(/\\/g, '/');
                 const imageUrl = cleanPath.startsWith('http') 
                   ? cleanPath 
                   : `${API_BASE_IMAGE}/${cleanPath}`;
-                console.log("URL generada para Aatrox:", imageUrl);
+                // console.log("URL generada para Aatrox:", imageUrl);
                 setRewardImages(prev => ({
                   ...prev,
                   "676c9858aa8abeca8327ee72": imageUrl
@@ -741,7 +741,7 @@ const CasePage = () => {
       }
       
       // Registrar la estructura completa del ítem recibido
-      console.log("ÍTEM RECIBIDO DE API:", targetItem);
+      // console.log("ÍTEM RECIBIDO DE API:", targetItem);
       
       // Encontrar el índice del item en la lista de items disponibles
       let baseIndex = findExactItemIndex(lootbox.items, targetItem);
@@ -758,7 +758,7 @@ const CasePage = () => {
           baseIndex = 0;
         }
       } else {
-        console.log("✅ Coincidencia encontrada en índice:", baseIndex);
+        // console.log("✅ Coincidencia encontrada en índice:", baseIndex);
       }
 
       // Configuración de la animación
@@ -1098,7 +1098,7 @@ const CasePage = () => {
                                        selectedItem.details?.fragmentType === "especifico");
               
               // Imprimir toda la estructura para depuración
-              console.log("DETAILS DEL FRAGMENTO:", selectedItem.details);
+              // console.log("DETAILS DEL FRAGMENTO:", selectedItem.details);
               
               // PARTE CRÍTICA: Obtener el ItemId para fragmentos específicos
               // Esto busca directamente en 'details' las propiedades conocidas donde puede estar el ID de la skin
@@ -1106,47 +1106,47 @@ const CasePage = () => {
               let skinImage = null;
               
               if (isFragmentSpecific && selectedItem.details) {
-                console.log("ES UN FRAGMENTO ESPECÍFICO");
+                // console.log("ES UN FRAGMENTO ESPECÍFICO");
                 
                 // Buscamos explícitamente el ID de la skin en todos los posibles lugares
                 if (selectedItem.details.ItemId) {
-                  console.log("Encontrado ItemId (mayúscula):", selectedItem.details.ItemId);
+                  // console.log("Encontrado ItemId (mayúscula):", selectedItem.details.ItemId);
                   rewardItemId = selectedItem.details.ItemId;
                 } 
                 else if (selectedItem.details.itemId) {
-                  console.log("Encontrado itemId (minúscula):", selectedItem.details.itemId);
+                  // console.log("Encontrado itemId (minúscula):", selectedItem.details.itemId);
                   rewardItemId = selectedItem.details.itemId;
                 }
                 else if (selectedItem.details.rewardItemId) {
-                  console.log("Encontrado rewardItemId:", selectedItem.details.rewardItemId);
+                  // console.log("Encontrado rewardItemId:", selectedItem.details.rewardItemId);
                   rewardItemId = selectedItem.details.rewardItemId;
                 }
                 
                 // Verificamos si el ID es un objeto (puede contener la propiedad _id)
                 if (rewardItemId && typeof rewardItemId === 'object') {
-                  console.log("El ID es un objeto, extrayendo _id:", rewardItemId);
+                  // console.log("El ID es un objeto, extrayendo _id:", rewardItemId);
                   rewardItemId = rewardItemId._id || rewardItemId;
                 }
                 
                 // BUSCAMOS LA SKIN EXPLÍCITAMENTE
                 // Este es un ID hardcodeado basado en los logs "676c9858aa8abeca8327ee72"
                 if (rewardImages["676c9858aa8abeca8327ee72"]) {
-                  console.log("ENCONTRADA IMAGEN CON ID CONOCIDO");
+                  // console.log("ENCONTRADA IMAGEN CON ID CONOCIDO");
                   skinImage = rewardImages["676c9858aa8abeca8327ee72"];
                 }
                 // Intentamos buscar con el ID obtenido
                 else if (rewardItemId && rewardImages[rewardItemId]) {
-                  console.log("Encontrada imagen con ID dinámico:", rewardItemId);
+                  // console.log("Encontrada imagen con ID dinámico:", rewardItemId);
                   skinImage = rewardImages[rewardItemId];
                 }
                 // Si todo falla, buscamos por cada clave en el objeto rewardImages
                 else {
-                  console.log("Buscando imagen en todas las claves de rewardImages:");
-                  console.log("Claves disponibles:", Object.keys(rewardImages));
+                  // console.log("Buscando imagen en todas las claves de rewardImages:");
+                  // console.log("Claves disponibles:", Object.keys(rewardImages));
                   // Solución desesperada: tomar la primera imagen disponible
                   if (Object.keys(rewardImages).length > 0) {
                     const firstKey = Object.keys(rewardImages)[0];
-                    console.log("Usando primera imagen disponible con clave:", firstKey);
+                    // console.log("Usando primera imagen disponible con clave:", firstKey);
                     skinImage = rewardImages[firstKey];
                   }
                 }
@@ -1201,7 +1201,7 @@ const CasePage = () => {
                             src={skinImage}
                             alt={`${displayName}`}
                             className="max-w-full max-h-40 object-contain"
-                            onLoad={() => console.log("Imagen de skin cargada correctamente")}
+                            onLoad={() => // console.log("Imagen de skin cargada correctamente")}
                             onError={(e) => {
                               console.error("Error al cargar imagen de skin, usando fallback");
                               e.target.src = skinFragmentImage;

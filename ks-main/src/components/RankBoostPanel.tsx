@@ -694,7 +694,7 @@ export function RankBoostPanel() {
                     championName={champion.name}
                     size={40}
                     className="mb-1"
-                    onError={() => console.log("Error cargando imagen de campeón:", champion.name)}
+                    onError={() => // console.log("Error cargando imagen de campeón:", champion.name)}
                   />
                   <span className="text-xs">{champion.name}</span>
                 </Button>

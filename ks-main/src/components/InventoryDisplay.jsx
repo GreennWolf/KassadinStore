@@ -326,7 +326,7 @@ export const InventoryDisplay = ({onRedeemUpdate}) => {
             const itemData = await getItemById(item.itemId);
             if (itemData) {
               itemsCache.set(item.itemId, itemData);
-              console.log(`Item ${item.itemId} cargado y cacheado:`, itemData);
+              // console.log(`Item ${item.itemId} cargado y cacheado:`, itemData);
             }
           } catch (error) {
             console.error(`Error al cargar detalles del item ${item.itemId}:`, error);
@@ -352,14 +352,14 @@ export const InventoryDisplay = ({onRedeemUpdate}) => {
         .filter(({ itemId }) => !skinsCache.has(itemId));
       
       if (skinFragments.length > 0) {
-        console.log(`Cargando ${skinFragments.length} skins para fragmentos específicos`);
+        // console.log(`Cargando ${skinFragments.length} skins para fragmentos específicos`);
         
         const skinPromises = skinFragments.map(async ({ itemId }) => {
           try {
             const skinData = await getSkinById(itemId);
             if (skinData) {
               skinsCache.set(itemId, skinData);
-              console.log(`Skin ${itemId} cargada y cacheada para fragmento:`, skinData);
+              // console.log(`Skin ${itemId} cargada y cacheada para fragmento:`, skinData);
             }
           } catch (error) {
             console.error(`Error al cargar skin para fragmento:`, error);
@@ -386,14 +386,14 @@ export const InventoryDisplay = ({onRedeemUpdate}) => {
         .filter(({ itemId }) => !itemsCache.has(itemId));
       
       if (itemFragments.length > 0) {
-        console.log(`Cargando ${itemFragments.length} items para fragmentos específicos`);
+        // console.log(`Cargando ${itemFragments.length} items para fragmentos específicos`);
         
         const itemFragmentPromises = itemFragments.map(async ({ itemId }) => {
           try {
             const itemData = await getItemById(itemId);
             if (itemData) {
               itemsCache.set(itemId, itemData);
-              console.log(`Item ${itemId} cargado y cacheado para fragmento:`, itemData);
+              // console.log(`Item ${itemId} cargado y cacheado para fragmento:`, itemData);
             }
           } catch (error) {
             console.error(`Error al cargar item para fragmento:`, error);
@@ -419,7 +419,7 @@ export const InventoryDisplay = ({onRedeemUpdate}) => {
     try {
       setLoading(true);
       const response = await getActiveItems(userId);
-      console.log("Items cargados:", response.items);
+      // console.log("Items cargados:", response.items);
       
       // Actualizar state inmediatamente con los datos disponibles
       setItems(response.items);
@@ -450,7 +450,7 @@ export const InventoryDisplay = ({onRedeemUpdate}) => {
       
       // Cargar detalles de items y fragmentos que lo necesitan
       if (itemsNeedingDetails.length > 0) {
-        console.log(`Cargando detalles para ${itemsNeedingDetails.length} items y fragmentos...`);
+        // console.log(`Cargando detalles para ${itemsNeedingDetails.length} items y fragmentos...`);
         loadItemDetails(itemsNeedingDetails);
       }
     } catch (error) {
@@ -543,7 +543,7 @@ export const InventoryDisplay = ({onRedeemUpdate}) => {
         return;
       }
       
-      console.log("Canjeando fragmento con ID:", fragmentPresetId);
+      // console.log("Canjeando fragmento con ID:", fragmentPresetId);
       
       // Llamar a la API con el fragmentPresetId identificado
       const response = await claimFragmentReward(fragmentPresetId);

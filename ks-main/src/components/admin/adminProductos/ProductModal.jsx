@@ -256,7 +256,7 @@ export const ProductModal = ({ isOpen, onClose, product, onSubmit, mode, activeC
     
     // Manejar selección de skins
     const handleSkinSelection = (selectedSkins) => {
-        console.log('Skins seleccionadas:', selectedSkins);
+        // console.log('Skins seleccionadas:', selectedSkins);
         
         setFormData(prev => ({
             ...prev,
@@ -470,7 +470,7 @@ export const ProductModal = ({ isOpen, onClose, product, onSubmit, mode, activeC
                     .filter(skin => typeof skin.id === 'string' && skin.id.match(/^[0-9a-fA-F]{24}$/))
                     .map(skin => skin.id);
                 
-                console.log(`[DEBUG] Enviando ${skinIds.length} skins:`, skinIds);
+                // console.log(`[DEBUG] Enviando ${skinIds.length} skins:`, skinIds);
                 
                 // Añadir cada ID individualmente con notación skins[]
                 if (skinIds.length > 0) {

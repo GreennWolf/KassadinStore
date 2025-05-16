@@ -120,13 +120,13 @@ export const getActiveItems = async () => {
     const response = await axios.get(`${API_BASE_URL}/active/${userId}`);
     
     // Log para depuración
-    console.log('Items recibidos del servidor:', response.data.items);
+    // console.log('Items recibidos del servidor:', response.data.items);
     
     // Transformar los items
     const transformedItems = transformItemsArray(response.data.items);
     
     // Log para depuración
-    console.log('Items transformados:', transformedItems);
+    // console.log('Items transformados:', transformedItems);
     
     return {
       ...response.data,
@@ -329,7 +329,7 @@ export const claimFragmentReward = async (fragmentPresetId) => {
     const userId = getUserId();
     if (!userId) throw new Error('Usuario no autenticado');
 
-    console.log(`Enviando solicitud de canje de fragmento. UserId: ${userId}, FragmentPresetId: ${fragmentPresetId}`);
+    // console.log(`Enviando solicitud de canje de fragmento. UserId: ${userId}, FragmentPresetId: ${fragmentPresetId}`);
     
     const response = await axios.post(`${API_BASE_URL}/claimFragment`, {
       userId,
@@ -356,7 +356,7 @@ export const claimFragmentReward = async (fragmentPresetId) => {
       result.coupon = response.data.coupon;
     }
     
-    console.log("Respuesta del canje de fragmento:", result);
+    // console.log("Respuesta del canje de fragmento:", result);
     
     return result;
   } catch (error) {

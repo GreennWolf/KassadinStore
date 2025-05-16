@@ -92,7 +92,7 @@ const UserDetailsModal = ({ isOpen, onClose, user, onUserUpdate }) => {
     setInventoryLoading(true);
     try {
       const response = await getActiveItems(user._id);
-      console.log("Inventario cargado:", response.items);
+      // console.log("Inventario cargado:", response.items);
       setInventory(response.items || []);
     } catch (error) {
       console.error("Error al cargar el inventario:", error);
@@ -590,7 +590,7 @@ const UserDetailsModal = ({ isOpen, onClose, user, onUserUpdate }) => {
                           const itemName = getItemName(item);
                           
                           // Depurar información del item
-                          console.log(`Item ${itemName}:`, {
+                          // console.log(`Item ${itemName}:`, {
                             type: item.itemType,
                             imageUrl,
                             srcWeb: item.srcWeb,

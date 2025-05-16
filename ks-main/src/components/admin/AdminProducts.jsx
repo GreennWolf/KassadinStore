@@ -205,17 +205,17 @@ export const AdminProducts = ({isUpdating, setIsUpdating}) => {
           throw new Error('Se requiere FormData para crear una cuenta unranked');
         }
         
-        console.log("Creando cuenta unranked");
+        // console.log("Creando cuenta unranked");
         const response = await createUnranked(productData);
         setItems(prev => [response, ...prev]);
         toast.success('Cuenta unranked creada con éxito');
       } else if (activeCategory === 'skins') {
-        console.log("Creando skin");
+        // console.log("Creando skin");
         const response = await createSkin(productData);
         setSkins(prev => [response, ...prev]);
         toast.success('Skin creada con éxito');
       } else {
-        console.log("Creando item");
+        // console.log("Creando item");
         const response = await createItem(productData);
         setItems(prev => [response, ...prev]);
         toast.success('Producto creado con éxito');

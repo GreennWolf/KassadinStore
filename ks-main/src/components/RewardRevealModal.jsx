@@ -112,7 +112,7 @@ const RewardRevealModal = ({ isOpen, onClose, reward }) => {
   
   // Manejar la carga de la imagen
   const handleImageLoad = () => {
-    console.log("Imagen cargada correctamente");
+    // console.log("Imagen cargada correctamente");
     setImageLoaded(true);
   };
 

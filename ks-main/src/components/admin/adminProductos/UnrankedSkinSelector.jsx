@@ -148,7 +148,7 @@ const UnrankedSkinSelector = ({ isOpen, onClose, selectedSkins = [], onSave }) =
         
         // Solo actualizar si hay un término de búsqueda
         if (searchQuery.trim()) {
-            console.log(`Términos de búsqueda: ${searchTerms.join(', ')}`);
+            // console.log(`Términos de búsqueda: ${searchTerms.join(', ')}`);
         }
         
         // Establecer nuevo timeout para actualizar la búsqueda con debounce
@@ -169,7 +169,7 @@ const UnrankedSkinSelector = ({ isOpen, onClose, selectedSkins = [], onSave }) =
     useEffect(() => {
         if (!isOpen) return;
         
-        console.log(`Término de búsqueda debounced cambiado a: "${debouncedSearch}"`);
+        // console.log(`Término de búsqueda debounced cambiado a: "${debouncedSearch}"`);
         
         // Guardar los IDs anteriores antes de actualizar la página
         const previousIds = availableSkins.map(skin => skin._id);
@@ -295,7 +295,7 @@ const UnrankedSkinSelector = ({ isOpen, onClose, selectedSkins = [], onSave }) =
         
         try {
             // Log de depuración para ver qué términos de búsqueda se están utilizando
-            console.log(`Buscando con término: "${query}", página: ${pageNumber}, resetList: ${resetList}
+            // console.log(`Buscando con término: "${query}", página: ${pageNumber}, resetList: ${resetList}
             Acciones: Borrado=${isSearchBeingErased}, Espacio=${isAddingSpace}, Continuando=${isContinuingSpacedSearch}`);
             
             // Preparar el término de búsqueda para hacerlo más inclusivo
@@ -306,7 +306,7 @@ const UnrankedSkinSelector = ({ isOpen, onClose, selectedSkins = [], onSave }) =
             if (query.includes(' ')) {
                 // Simplemente normalizar eliminando espacios múltiples y recortando
                 processedQuery = query.trim().replace(/\s+/g, ' ');
-                console.log(`Búsqueda con espacios - original: "${query}", normalizada: "${processedQuery}"`);
+                // console.log(`Búsqueda con espacios - original: "${query}", normalizada: "${processedQuery}"`);
             }
             
             // Decidir qué endpoint usar según el tipo de búsqueda
@@ -315,7 +315,7 @@ const UnrankedSkinSelector = ({ isOpen, onClose, selectedSkins = [], onSave }) =
             // Si hay un término de búsqueda, es más efectivo buscar en el endpoint de unrankeds
             // que maneja mejor la búsqueda por skins dentro de una cuenta
             if (processedQuery && processedQuery.trim().length > 0) {
-                console.log("Usando endpoint de unrankeds para búsqueda por skin:", processedQuery);
+                // console.log("Usando endpoint de unrankeds para búsqueda por skin:", processedQuery);
                 
                 const unrankedParams = {
                     page: pageNumber,
@@ -358,10 +358,10 @@ const UnrankedSkinSelector = ({ isOpen, onClose, selectedSkins = [], onSave }) =
                     hasMore: false
                 };
                 
-                console.log(`Encontradas ${allSkins.length} skins únicas en las cuentas unranked`);
+                // console.log(`Encontradas ${allSkins.length} skins únicas en las cuentas unranked`);
             } else {
                 // Para búsquedas vacías o carga inicial, usar el endpoint original de skins
-                console.log("Usando endpoint de skins para búsqueda general");
+                // console.log("Usando endpoint de skins para búsqueda general");
                 
                 const skinParams = {
                     page: pageNumber, 
@@ -379,7 +379,7 @@ const UnrankedSkinSelector = ({ isOpen, onClose, selectedSkins = [], onSave }) =
                 throw new Error('No se recibieron datos del servidor');
             }
             
-            console.log(`Resultados de búsqueda para "${query}":`, response.data.length);
+            // console.log(`Resultados de búsqueda para "${query}":`, response.data.length);
             
             // Procesar skins - asegurar URLs de imágenes correctas
             const API_BASE_URL = `${import.meta.env.VITE_API_URL}/images/`;
@@ -407,7 +407,7 @@ const UnrankedSkinSelector = ({ isOpen, onClose, selectedSkins = [], onSave }) =
                     newState = [...prevSkins, ...newSkins];
                 }
                 
-                console.log(`Actualizando availableSkins: ${newState.length} skins después de buscar "${query}"`);
+                // console.log(`Actualizando availableSkins: ${newState.length} skins después de buscar "${query}"`);
                 return newState;
             });
             
@@ -427,7 +427,7 @@ const UnrankedSkinSelector = ({ isOpen, onClose, selectedSkins = [], onSave }) =
             // Esta es la carga inicial (sin displayedSkins aún)
             const isInitialLoad = !hasPreviousResults && hasCurrentResults;
             
-            console.log(`Análisis para decisión:
+            // console.log(`Análisis para decisión:
             - forceDisplayUpdate: ${forceDisplayUpdate ? 'SÍ' : 'NO'}
             - isInitialLoad: ${isInitialLoad ? 'SÍ' : 'NO'}
             - hasCurrentResults: ${hasCurrentResults} (${processedSkins.length})
@@ -437,7 +437,7 @@ const UnrankedSkinSelector = ({ isOpen, onClose, selectedSkins = [], onSave }) =
             
             if (forceDisplayUpdate && hasCurrentResults) {
                 // 1. Si se fuerza la actualización (clic en botón/Enter) y hay resultados, actualizar
-                console.log(`✅ Actualizando displayedSkins forzadamente con ${processedSkins.length} skins para "${query}"`);
+                // console.log(`✅ Actualizando displayedSkins forzadamente con ${processedSkins.length} skins para "${query}"`);
                 setDisplayedSkins(processedSkins);
                 
                 // Guardar el término que causó este cambio visual
@@ -445,16 +445,16 @@ const UnrankedSkinSelector = ({ isOpen, onClose, selectedSkins = [], onSave }) =
                 
             } else if (isInitialLoad) {
                 // 2. Carga inicial - mostrar todo cuando no hay nada mostrado aún
-                console.log("🔄 Carga inicial - mostrando todas las skins");
+                // console.log("🔄 Carga inicial - mostrando todas las skins");
                 setDisplayedSkins(processedSkins);
                 
             } else {
                 // 3. En todos los demás casos, mantener la visualización actual
-                console.log("ℹ️ Conservando visualización actual - sin cambios en displayedSkins");
+                // console.log("ℹ️ Conservando visualización actual - sin cambios en displayedSkins");
                 
                 // Opcional: Si se fuerza pero no hay resultados, mostrar mensaje específico
                 if (forceDisplayUpdate && !hasCurrentResults) {
-                    console.log("⚠️ Búsqueda forzada sin resultados");
+                    // console.log("⚠️ Búsqueda forzada sin resultados");
                     // Se podría mostrar algún mensaje o notificación específica
                 }
             }
@@ -619,11 +619,11 @@ const UnrankedSkinSelector = ({ isOpen, onClose, selectedSkins = [], onSave }) =
         // Detectar si se está borrando texto (para mejorar aún más la detección)
         // Comparamos con searchQuery en vez de debouncedSearch para tener una detección más inmediata
         if (searchQuery.length > newValue.length && searchQuery.startsWith(newValue)) {
-            console.log("🔍 Detectado borrado en handleSearchChange - manteniendo visualización");
+            // console.log("🔍 Detectado borrado en handleSearchChange - manteniendo visualización");
             // Se está borrando - no necesitamos hacer nada especial aquí,
             // la lógica principal está en el efecto de debouncedSearch
         } else if (newValue.length > searchQuery.length) {
-            console.log("🔍 Detectada escritura en handleSearchChange");
+            // console.log("🔍 Detectada escritura en handleSearchChange");
             // Se está escribiendo
         }
         
