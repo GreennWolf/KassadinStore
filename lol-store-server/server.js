@@ -1,10 +1,35 @@
 const express = require('express');
+const http = require('http');
 const { connectToDatabase } = require('./database/db'); // Importar la conexión a la base de datos
 const config = require('./config/config');
 const championRoutes = require('./routes/championRoutes');
 const scrapeRoutes = require('./routes/scrapeRoutes');
 const cors = require('cors'); // Importa cors
 const path = require('path'); // Importa path
+const fs = require('fs'); // Para manejo de archivos
+const websocketService = require('./services/websocketService'); // Servicio de WebSockets
+const dotenv = require('dotenv');
+// Importar sistema de logs si existe, si no usar console directamente
+let logger;
+try {
+    logger = require('./utils/logger');
+    // Activar el override de console.log para guardar todos los logs en archivos
+    logger.overrideConsole();
+    // Log inicial
+    logger.log('Iniciando servidor Kassadin Store...');
+} catch (error) {
+    console.log('Sistema de logs no disponible, usando console directamente');
+    // Crear un logger falso para que el código funcione sin cambios
+    logger = {
+        log: console.log,
+        error: console.error,
+        stockUpdate: console.log,
+        overrideConsole: () => {}
+    };
+}
+
+// Cargar variables de entorno
+dotenv.config();
 const userRoutes = require('./routes/userRoutes');
 const purchaseRoutes = require('./routes/purchaseRoutes');
 const paymentMethodRoutes = require('./routes/paymentMethodRoutes');
@@ -24,9 +49,13 @@ const unrankedRoutes = require('./routes/unrankedRoutes')
 const rewardCouponPresetRoutes = require('./routes/rewardCouponPresetRoutes')
 const fragmentsRoutes = require('./routes/fragmentsRoutes');
 const rewardsRedeemRoutes = require('./routes/rewardsRedeemRoutes')
+const eloBoostRoutes = require('./routes/eloBoostRoutes')
 const { errorHandler } = require('./middlewares/errorHandler');
 const { verifyEmail } = require('./controllers/userController');
 const dashboardRoutes = require('./routes/dashboardRoutes');
+const progressRoutes = require('./routes/progressRoutes');
+// Importar el cron job para actualización de campeones
+const { updateChampionIcons } = require('./scripts/scrapeCronJob');
 
 const app = express();
 
@@ -37,13 +66,7 @@ connectToDatabase();
 app.use(express.json());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use(cors({
-    origin: ['https://ksdinstore.com', 'http://localhost:3000', 'http://localhost:8080'], // Agrega todos los orígenes permitidos
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
-    credentials: true,
-    maxAge: 86400 // 24 horas
-}));
+app.use(cors(config.corsOptions));
 
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
@@ -69,8 +92,10 @@ app.use('/api/rewardcouponpreset', rewardCouponPresetRoutes);
 app.use('/api/unrankeds', unrankedRoutes);
 app.use('/api/fragments', fragmentsRoutes);
 app.use('/api/redeems', rewardsRedeemRoutes);
+app.use('/api/eloboost', eloBoostRoutes);
 app.get('/verify/:token', verifyEmail);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/progress', progressRoutes);
 app.use('/images', express.static(path.join(__dirname, 'public/images')));
 app.use('/chromas', express.static(path.join(__dirname, 'public/chromas')));
 app.use('/receipts', express.static(path.join(__dirname, 'public/receipts')));
@@ -81,7 +106,12 @@ app.use('/RankIcons', express.static(path.join(__dirname, 'public/RankIcons')));
 app.use('/lootbox', express.static(path.join(__dirname, 'public/lootbox')));
 app.use('/logo', express.static(path.join(__dirname, 'public/Logo.png')));
 app.use('/unrankeds', express.static(path.join(__dirname, 'public/unrankeds')));
+app.use('/champions', express.static(path.join(__dirname, 'public/champions')));
+app.use('/chromas', express.static(path.join(__dirname, 'public')));
 
+// Ruta de diagnóstico (temporal)
+const diagnosticRoutes = require('./routes/diagnosticRoutes');
+app.use('/api/diagnostic', diagnosticRoutes);
 
 app.use(errorHandler);
 
@@ -100,8 +130,31 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 
 
-// Iniciar el servidor
+// Crear servidor HTTP y configurar WebSockets
 const port = process.env.PORT || 3000;
-app.listen(port, () => {
-    console.log(`Servidor ejecutándose en el puerto ${port}`);
+const server = http.createServer(app);
+
+// Inicializar servicio de WebSockets
+websocketService.initialize(server);
+
+// Iniciar el servidor
+server.listen(port, () => {
+    logger.log(`Servidor ejecutándose en modo ${config.env} en el puerto ${port}`);
+    
+    // Verificar que el directorio de logs exista
+    const logsDir = path.join(__dirname, 'logs');
+    if (!fs.existsSync(logsDir)) {
+        fs.mkdirSync(logsDir, { recursive: true });
+    }
+    logger.log('Directorio de logs: ' + logsDir);
+    
+    // Log específico para actualizaciones de stock
+    logger.stockUpdate('=== INICIANDO SISTEMA DE SEGUIMIENTO DE STOCK ===');
+    logger.stockUpdate('El sistema de seguimiento de stock está activo y registrará todas las actualizaciones de stock');
+    
+    // Ejecutar la actualización de iconos de campeones al iniciar el servidor
+    logger.log('Iniciando actualización de iconos de campeones...');
+    updateChampionIcons()
+        .then(() => logger.log('Actualización de iconos de campeones completada'))
+        .catch(err => logger.error('Error al actualizar iconos de campeones:', err));
 });

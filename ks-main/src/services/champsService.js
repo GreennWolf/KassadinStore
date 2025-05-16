@@ -139,8 +139,12 @@ export const getAllSkins = async (params) => {
             subcategory = 'all', 
             showAll, 
             orderByNew = false,
-            reward = false // Nuevo parámetro
+            reward = false, // Nuevo parámetro
+            ids = '' // Para buscar skins específicas por ID
         } = params;
+        
+        // Log de depuración para ver los parámetros de búsqueda
+        console.log('Parámetros de búsqueda getAllSkins:', { page, limit, search, showAll, ids });
         
         const queryParams = new URLSearchParams({
             page: page.toString(),
@@ -149,10 +153,21 @@ export const getAllSkins = async (params) => {
             subcategory,
             showAll,
             orderByNew: orderByNew.toString(),
-            reward: reward.toString() // Añadir reward a los parámetros
+            reward: reward.toString()
         });
+        
+        // Añadir IDs si se proporcionan
+        if (ids) {
+            queryParams.append('ids', ids);
+        }
 
-        const response = await axios.get(`${API_BASE_URL}/skins?${queryParams}`);
+        const url = `${API_BASE_URL}/skins?${queryParams}`;
+        console.log('URL de búsqueda:', url);
+        
+        const response = await axios.get(url);
+        
+        // Log de los resultados obtenidos
+        console.log(`Resultados obtenidos: ${response.data?.data?.length || 0} skins`);
         
         // Transformar las URLs de las imágenes
         if (response.data && Array.isArray(response.data.data)) {
@@ -171,6 +186,7 @@ export const getAllSkins = async (params) => {
         };
     } catch (error) {
         console.error('Error al obtener las skins:', error);
+        console.error('Detalles del error:', error.response?.data || error.message);
         throw error;
     }
 };
@@ -339,6 +355,88 @@ export const toggleDestacadoSkin = async (id) => {
     }
 };
 
+// Actualizar iconos de campeones específicos
+export const updateMissingChampions = async (champions) => {
+  try {
+    const response = await axios.post(`${API_BASE_URL}/update-missing-champions`, { champions });
+    return response.data;
+  } catch (error) {
+    console.error('Error al actualizar iconos de campeones:', error);
+    throw error;
+  }
+};
+
+// Función auxiliar para verificar si una imagen existe
+export const checkChampionImage = async (championName) => {
+  try {
+    // Intenta cargar la imagen para verificar si existe
+    await axios.get(`${import.meta.env.VITE_API_URL}/champions/${championName}.png`, { responseType: 'blob' });
+    return true;
+  } catch (error) {
+    console.warn(`No se pudo encontrar imagen para el campeón ${championName}`);
+    return false;
+  }
+};
+
+// Función para obtener una URL de imagen de campeón con respaldo
+export const getChampionImageUrl = (championName, fallbackName = 'default') => {
+  if (!championName) return `${import.meta.env.VITE_API_URL}/champions/${fallbackName}.png`;
+  
+  // Mapeo de nombres especiales para casos problemáticos
+  const nameMapping = {
+    'Wukong': 'MonkeyKing',
+    'MonkeyKing': 'Wukong',
+    'Nunu & Willump': 'Nunu',
+    'Nunu': 'Nunu & Willump',
+    'Aurelion Sol': 'AurelionSol',
+    'Bel\'Veth': 'Belveth',
+    'Cho\'Gath': 'Chogath',
+    'Dr. Mundo': 'DrMundo',
+    'Jarvan IV': 'JarvanIV',
+    'Kai\'Sa': 'Kaisa',
+    'Kha\'Zix': 'Khazix',
+    'Kog\'Maw': 'KogMaw',
+    'K\'Sante': 'KSante',
+    'LeBlanc': 'Leblanc',
+    'Lee Sin': 'LeeSin',
+    'Master Yi': 'MasterYi',
+    'Miss Fortune': 'MissFortune',
+    'Rek\'Sai': 'RekSai',
+    'Renata Glasc': 'Renata',
+    'Tahm Kench': 'TahmKench',
+    'Twisted Fate': 'TwistedFate',
+    'Vel\'Koz': 'Velkoz',
+    'Xin Zhao': 'XinZhao'
+  };
+  
+  // Usar el nombre original primero
+  let imageUrl = `${import.meta.env.VITE_API_URL}/champions/${championName}.png`;
+  
+  // Función para crear una imagen con respaldo
+  const withFallback = (url, onError) => {
+    const img = new Image();
+    img.src = url;
+    img.onerror = onError;
+    return img;
+  };
+  
+  // Probar primero con el nombre original
+  const img = withFallback(imageUrl, () => {
+    // Si falla, intentar con el nombre mapeado si existe
+    const mappedName = nameMapping[championName];
+    if (mappedName) {
+      imageUrl = `${import.meta.env.VITE_API_URL}/champions/${mappedName}.png`;
+      console.log(`Intentando nombre alternativo para ${championName}: ${mappedName}`);
+    } else {
+      // Si no hay mapeo, usar el respaldo predeterminado
+      imageUrl = `${import.meta.env.VITE_API_URL}/champions/${fallbackName}.png`;
+      console.warn(`Usando imagen de respaldo para ${championName}`);
+    }
+  });
+  
+  return imageUrl;
+};
+
 // Y asegúrate de incluirlas en el export default al final
 export default {
     obtenerActualizaciones,
@@ -358,5 +456,9 @@ export default {
     getAllNewSkins,
     // Nuevas operaciones
     getAllDestacadosSkins,
-    toggleDestacadoSkin
+    toggleDestacadoSkin,
+    // Funciones para manejo de imágenes de campeones
+    updateMissingChampions,
+    checkChampionImage,
+    getChampionImageUrl
 };

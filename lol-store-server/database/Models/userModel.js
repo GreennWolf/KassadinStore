@@ -18,19 +18,30 @@ const getRankByXp = async (xp) => {
     }
 };
 
-// Inicialización: obtener el rango predeterminado al iniciar la aplicación
-(async () => {
+// Función para obtener el rango por defecto
+async function getDefaultRankId() {
     try {
-        const defaultRank = await getRankByXp(0);
+        // Verificar si ya hemos cargado el defaultRankId
+        if (defaultRankId) {
+            return defaultRankId;
+        }
+        
+        // Si no lo tenemos, intentar obtenerlo
+        const Rank = require('./ranksModel');
+        const defaultRank = await Rank.findOne({ requiredXP: 0 });
+        
         if (defaultRank) {
             defaultRankId = defaultRank._id;
+            return defaultRankId;
         } else {
             console.error('No se encontró un rango predeterminado para XP = 0.');
+            return null;
         }
     } catch (error) {
         console.error('Error al obtener el rango predeterminado:', error);
+        return null;
     }
-})();
+}
 
 const userSchema = new mongoose.Schema({
     fullName: {
@@ -79,11 +90,7 @@ const userSchema = new mongoose.Schema({
     rank: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Ranks',
-        required: true,
-        default: function () {
-            // Asignar el rango predeterminado almacenado en `defaultRankId`
-            return defaultRankId;
-        },
+        required: true  // Quitamos el default aquí ya que lo asignaremos explícitamente
     },
     inventory: {  // Corregido: estaba dentro de 'rank'
         type: mongoose.Schema.Types.ObjectId,

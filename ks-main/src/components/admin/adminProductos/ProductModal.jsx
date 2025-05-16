@@ -50,6 +50,7 @@ export const ProductModal = ({ isOpen, onClose, product, onSubmit, mode, activeC
         escenciaNaranja: '',
         region: '',
         handUpgrade: true,
+        stock: 1,            // Stock para unrankeds (nuevo campo)
         selectedSkins: []    // Skins seleccionadas con datos completos
     });
     
@@ -158,6 +159,7 @@ export const ProductModal = ({ isOpen, onClose, product, onSubmit, mode, activeC
                 rpAmount: product.rpAmount || '',
                 region: product.region || '',
                 handUpgrade: product.handUpgrade !== undefined ? product.handUpgrade : true,
+                stock: product.stock !== undefined ? product.stock : 1,
                 selectedSkins: selectedSkins
             });
         } else {
@@ -179,6 +181,7 @@ export const ProductModal = ({ isOpen, onClose, product, onSubmit, mode, activeC
                 escenciaNaranja: '',
                 region: '',
                 handUpgrade: true,
+                stock: 1,
                 selectedSkins: []
             });
         }
@@ -307,6 +310,16 @@ export const ProductModal = ({ isOpen, onClose, product, onSubmit, mode, activeC
                     }
                 }
                 break;
+
+            case 'stock':
+                if (activeCategory === 'unrankeds') {
+                    if (!value) {
+                        error = 'El stock es requerido';
+                    } else if (parseInt(value) < 1) {
+                        error = 'El stock debe ser al menos 1';
+                    }
+                }
+                break;
                 
             case 'rpAmount':
                 if (activeCategory === 'unrankeds') {
@@ -344,7 +357,7 @@ export const ProductModal = ({ isOpen, onClose, product, onSubmit, mode, activeC
     const validateForm = () => {
         const fieldsToValidate = {
             skins: ['NombreSkin', 'champion', 'priceRP'],
-            unrankeds: ['titulo', 'priceRP', 'nivel', 'rpAmount', 'region', 'escenciaNaranja'],
+            unrankeds: ['titulo', 'priceRP', 'nivel', 'rpAmount', 'region', 'escenciaNaranja', 'stock'],
             default: ['name', 'type', 'priceRP']
         };
         
@@ -440,6 +453,7 @@ export const ProductModal = ({ isOpen, onClose, product, onSubmit, mode, activeC
                 formDataObj.append('escenciaNaranja', formData.escenciaNaranja || '0');
                 formDataObj.append('escencia', formData.escencia || '0');
                 formDataObj.append('handUpgrade', formData.handUpgrade ? 'true' : 'false');
+                formDataObj.append('stock', formData.stock || '1');
                 
                 if (formData.srcWeb) {
                     formDataObj.append('srcWeb', formData.srcWeb);
@@ -617,6 +631,19 @@ export const ProductModal = ({ isOpen, onClose, product, onSubmit, mode, activeC
                                                 className={hasError('nivel') ? 'border-red-500' : ''}
                                             />
                                             {renderError('nivel')}
+                                        </div>
+                                        
+                                        <div className="space-y-2">
+                                            <Label htmlFor="stock">Stock</Label>
+                                            <Input
+                                                id="stock"
+                                                type="number"
+                                                value={formData.stock}
+                                                onChange={handleChange}
+                                                min="1"
+                                                className={hasError('stock') ? 'border-red-500' : ''}
+                                            />
+                                            {renderError('stock')}
                                         </div>
 
                                         <div className="space-y-2">

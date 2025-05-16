@@ -69,18 +69,23 @@ const Unrankeds = () => {
       const loadInitialData = async () => {
         setIsLoading(true);
         try {
-          // Modificar para incluir parámetros de búsqueda de skins
+          // Usar parámetros de búsqueda con el backend mejorado
+          // No es necesario filtrar en el frontend ya que el backend se encarga de la búsqueda
           const params = {
-            search: searchQuery,
+            search: searchQuery, // Búsqueda por título
             region: selectedRegion !== "all" ? selectedRegion : undefined,
-            skinSearch: skinSearchQuery || undefined
+            skinSearch: skinSearchQuery || undefined, // Búsqueda específica por skins
+            includeSearch: true // Habilitar búsqueda inclusiva para términos con espacios
           };
+          
+          console.log("Búsqueda con parámetros:", params);
           
           const [accountsData, rpConversionsData] = await Promise.all([
             getAllUnrankeds(params),
             getAllRPPriceConversions()
           ]);
           
+          console.log(`Cuentas encontradas: ${accountsData.data?.length || 0}`);
           setAccounts(accountsData.data || []);
           setRpConversions(rpConversionsData || []);
         } catch (error) {
@@ -184,7 +189,7 @@ const Unrankeds = () => {
     });
   };
   
-  // Función para obtener una imagen aleatoria de las skins
+  // Función para obtener una imagen aleatoria de las skins o priorizar las que coinciden con la búsqueda
   const getRandomSkinImage = (account, searchTerm = '') => {
     // Si no hay skins, devuelve la imagen de la cuenta
     if (!account.skins || !Array.isArray(account.skins) || account.skins.length === 0) {
@@ -193,48 +198,76 @@ const Unrankeds = () => {
 
     // Si hay búsqueda de skins, intentar encontrar coincidencia
     if (searchTerm) {
-      const matchingSkins = account.skins.filter(skin => {
-        const skinName = skin.name || skin.NombreSkin || '';
-        const championName = skin.champion?.name || skin.champion || '';
-        return skinName.toLowerCase().includes(searchTerm.toLowerCase()) || 
-               championName.toLowerCase().includes(searchTerm.toLowerCase());
+      const lowercaseSearch = searchTerm.toLowerCase();
+      const terms = lowercaseSearch.split(/\s+/); // Dividir por espacios
+      
+      // Array para guardar las coincidencias con su puntuación (mayor = mejor coincidencia)
+      const scoredSkins = account.skins.map(skin => {
+        let score = 0;
+        
+        // Normalizar nombres para la comparación
+        const skinName = (skin.name || skin.NombreSkin || '').toLowerCase();
+        const championName = (skin.champion?.name || skin.championData?.name || '').toLowerCase();
+        
+        // Verificar coincidencia exacta - mayor puntuación
+        if (skinName === lowercaseSearch || championName === lowercaseSearch) {
+          score += 100;
+        }
+        
+        // Verificar si contiene la búsqueda completa - puntuación alta
+        if (skinName.includes(lowercaseSearch) || championName.includes(lowercaseSearch)) {
+          score += 50;
+        }
+        
+        // Verificar coincidencia con términos individuales - puntuación menor
+        for (const term of terms) {
+          if (term.length > 1) { // Ignorar términos muy cortos
+            if (skinName.includes(term)) {
+              score += 10;
+            }
+            if (championName.includes(term)) {
+              score += 10;
+            }
+          }
+        }
+        
+        return { skin, score };
       });
       
+      // Ordenar por puntuación (mayor a menor)
+      scoredSkins.sort((a, b) => b.score - a.score);
+      
+      // Si tenemos skins con puntuación positiva, mostrar la de mayor puntuación
+      const matchingSkins = scoredSkins.filter(item => item.score > 0);
+      
       if (matchingSkins.length > 0) {
-        const skin = matchingSkins[0];
-        return skin.srcLocal || skin.imageUrl || skin.srcWeb || '/placeholder.png';
-      } else {
-        return null; // Si no hay coincidencias, no mostrar ninguna imagen
+        console.log(`Encontradas ${matchingSkins.length} skins coincidentes para "${searchTerm}"`);
+        
+        // Tomar la mejor coincidencia o una aleatoria entre las mejores si hay varias con la misma puntuación
+        const topScore = matchingSkins[0].score;
+        const bestMatches = matchingSkins.filter(item => item.score === topScore);
+        
+        // Seleccionar una aleatoriamente entre las mejores
+        const selectedMatch = bestMatches[Math.floor(Math.random() * bestMatches.length)];
+        
+        console.log(`Mostrando skin ${selectedMatch.skin.NombreSkin || 'sin nombre'}`);
+        
+        return selectedMatch.skin.srcLocal || 
+               selectedMatch.skin.imageUrl || 
+               selectedMatch.skin.srcWeb || 
+               '/placeholder.png';
       }
     }
     
-    // Si no hay búsqueda, elegir aleatoriamente
+    // Si no hay búsqueda o no se encontraron coincidencias, elegir aleatoriamente
     const randomIndex = Math.floor(Math.random() * account.skins.length);
     const randomSkin = account.skins[randomIndex];
     return randomSkin.srcLocal || randomSkin.imageUrl || randomSkin.srcWeb || '/placeholder.png';
   };
 
-  // Filtrar cuentas que no coinciden con la búsqueda de skins
-  const filteredAccounts = getSortedAccounts(accounts).filter(account => {
-    // Si no hay búsqueda de skins, mostrar todas las cuentas
-    if (!skinSearchQuery) return true;
-    
-    // Si hay búsqueda de skins, verificar si la cuenta tiene skins coincidentes
-    if (!account.skins || !Array.isArray(account.skins) || account.skins.length === 0) {
-      return false; // No mostrar cuentas sin skins cuando hay búsqueda
-    }
-    
-    // Buscar skins coincidentes
-    const hasMatchingSkin = account.skins.some(skin => {
-      const skinName = (skin.name || skin.NombreSkin || '').toLowerCase();
-      const championName = (skin.champion?.name || skin.champion || '').toLowerCase();
-      return skinName.includes(skinSearchQuery.toLowerCase()) || 
-             championName.includes(skinSearchQuery.toLowerCase());
-    });
-    
-    // Solo mostrar cuentas con skins coincidentes
-    return hasMatchingSkin;
-  });
+  // Ya no es necesario filtrar aquí, el backend se encarga de filtrar por skins
+  // Simplemente ordenamos las cuentas según lo seleccionado
+  const filteredAccounts = getSortedAccounts(accounts);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -376,6 +409,11 @@ const Unrankeds = () => {
                       {account.skins && Array.isArray(account.skins) && (
                         <Badge className="bg-white">{account.skins.length} skins</Badge>
                       )}
+                      {account.stock !== undefined && (
+                        <Badge className={`${account.stock > 0 ? 'bg-green-600' : 'bg-red-600'} text-white`}>
+                          {account.stock > 0 ? `Stock: ${account.stock}` : 'Sin stock'}
+                        </Badge>
+                      )}
                     </div>
                     
                     {/* Overlay para "Ver detalles" */}
@@ -404,8 +442,9 @@ const Unrankeds = () => {
                     <Button 
                       onClick={() => handleAddToCart(account)}
                       className="w-full bg-primary hover:bg-primary/90 text-primary-foreground"
+                      disabled={account.stock === 0}
                     >
-                      Agregar al carrito
+                      {account.stock > 0 ? 'Agregar al carrito' : 'Sin stock'}
                     </Button>
                   </div>
                 </Card>

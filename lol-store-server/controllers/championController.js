@@ -142,7 +142,37 @@ const skinController = {
             }
     
             if (search) {
-                query.NombreSkin = { $regex: search, $options: 'i' };
+                // Verificar si tenemos búsqueda inclusiva (con palabras separadas por |)
+                const includeSearch = req.query.includeSearch === 'true';
+                
+                if (includeSearch && search.includes('|')) {
+                    // Dividir la búsqueda en palabras clave y crear consulta OR
+                    const keywords = search.split('|').filter(k => k.trim().length > 0);
+                    
+                    // Crear expresiones regulares para cada palabra clave
+                    // Cada palabra debe ser encontrada en el nombre de la skin
+                    const regexQueries = keywords.map(keyword => ({
+                        NombreSkin: { $regex: keyword.trim(), $options: 'i' }
+                    }));
+                    
+                    // Añadir búsqueda en nombres de campeones también
+                    const championRegexQueries = keywords.map(keyword => ({
+                        'championData.name': { $regex: keyword.trim(), $options: 'i' }
+                    }));
+                    
+                    // Combinar ambas consultas
+                    if (regexQueries.length > 0) {
+                        // Reemplazar query simple con una búsqueda más completa
+                        // $or para que coincida con cualquiera de los términos
+                        query = { 
+                            ...query,
+                            $or: [...regexQueries, ...championRegexQueries]
+                        };
+                    }
+                } else {
+                    // Búsqueda simple (comportamiento anterior)
+                    query.NombreSkin = { $regex: search, $options: 'i' };
+                }
             }
     
             if (subcategory === 'chromas') {

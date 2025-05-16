@@ -109,6 +109,9 @@ const unrankedsController = {
             
             console.log(`Total de skins válidas: ${validSkins.length}`);
 
+            // Extraer el stock de la solicitud o usar valor por defecto
+            const stock = req.body.stock ? parseInt(req.body.stock) : 1;
+            
             // Construir el objeto de datos para la cuenta
             const unrankedData = {
                 titulo: titulo.trim(),
@@ -121,6 +124,7 @@ const unrankedsController = {
                 escenciaNaranja: parseInt(escenciaNaranja) || 0,
                 handUpgrade: handUpgrade === 'false' ? false : Boolean(handUpgrade),
                 skins: validSkins,
+                stock: stock > 0 ? stock : 1, // Asegurar que el stock sea al menos 1
                 ...(req.file && { srcLocal: req.file.filename })
             };
             
@@ -150,12 +154,14 @@ const unrankedsController = {
                 page = 1,
                 limit = 20,
                 search = '',
+                skinSearch = '', // Búsqueda de skins
                 region,
                 minLevel,
                 maxLevel,
                 minRP,
                 maxRP,
-                showAll = false
+                showAll = false,
+                includeSearch = 'false' // Para búsqueda inclusiva (palabras sueltas)
             } = req.query;
 
             const skip = (page - 1) * limit;
@@ -165,36 +171,198 @@ const unrankedsController = {
                 query.active = true;
             }
 
+            const isInclusiveSearch = includeSearch === 'true';
+
+            // Búsqueda por título de la cuenta
             if (search) {
-                query.titulo = { $regex: search, $options: 'i' };
+                // Si es búsqueda inclusiva y contiene espacios
+                if (isInclusiveSearch && search.includes(' ')) {
+                    const titleKeywords = search.split(' ').filter(k => k.trim().length > 0);
+                    
+                    // Crear condiciones de búsqueda para el título
+                    const titleConditions = titleKeywords.map(keyword => ({
+                        titulo: { $regex: keyword.trim(), $options: 'i' }
+                    }));
+                    
+                    // Añadir a la consulta si hay palabras clave
+                    if (titleConditions.length > 0) {
+                        query.$or = titleConditions;
+                    }
+                } else if (isInclusiveSearch && search.includes('|')) {
+                    // Si usa el formato con pipe (|) para términos separados
+                    const titleKeywords = search.split('|').filter(k => k.trim().length > 0);
+                    
+                    // Crear condiciones de búsqueda para título
+                    const titleConditions = titleKeywords.map(keyword => ({
+                        titulo: { $regex: keyword.trim(), $options: 'i' }
+                    }));
+                    
+                    // Añadir a la consulta si hay palabras clave
+                    if (titleConditions.length > 0) {
+                        query.$or = titleConditions;
+                    }
+                } else {
+                    // Búsqueda simple tradicional
+                    query.titulo = { $regex: search, $options: 'i' };
+                }
+            }
+            
+            // Preparar términos de búsqueda para skins
+            let keywords = [];
+            
+            // Procesar búsqueda principal si es inclusiva
+            if (search && isInclusiveSearch) {
+                if (search.includes(' ')) {
+                    // Dividir por espacios si contiene espacios
+                    keywords = [...keywords, ...search.split(' ').filter(k => k.trim().length > 0)];
+                } else if (search.includes('|')) {
+                    // Dividir por | si usa ese formato
+                    keywords = [...keywords, ...search.split('|').filter(k => k.trim().length > 0)];
+                } else {
+                    // Término único
+                    keywords.push(search);
+                }
+            }
+            
+            // Procesar términos específicos de búsqueda de skins
+            if (skinSearch) {
+                // Dividir en palabras si tiene espacios
+                if (skinSearch.includes(' ')) {
+                    keywords = [...keywords, ...skinSearch.split(' ').filter(k => k.trim().length > 0)];
+                } else if (skinSearch.includes('|')) {
+                    // Dividir por | si usa ese formato
+                    keywords = [...keywords, ...skinSearch.split('|').filter(k => k.trim().length > 0)];
+                } else {
+                    // Término único
+                    keywords.push(skinSearch);
+                }
+            }
+            
+            // Eliminar duplicados, palabras muy cortas, y normalizar
+            keywords = [...new Set(keywords)]
+                .filter(k => k.trim().length > 1)
+                .map(k => k.trim().toLowerCase());
+            
+            console.log("Términos de búsqueda final:", keywords);
+            
+            // Si hay términos de búsqueda de skins, necesitamos un enfoque diferente
+            if (keywords.length > 0) {
+                console.log("Buscando por los siguientes términos:", keywords);
+                
+                try {
+                    // Primero buscar las skins que coincidan con cualquiera de los términos
+                    const Skins = mongoose.model('Skin');
+                    
+                    // Crear condiciones de búsqueda para skins
+                    const skinSearchConditions = [];
+                    
+                    // Agregar condiciones para buscar en el nombre de la skin
+                    for (const keyword of keywords) {
+                        skinSearchConditions.push({ 
+                            NombreSkin: { $regex: keyword, $options: 'i' }
+                        });
+                    }
+                    
+                    // Obtener IDs de las skins que coinciden
+                    const matchingSkins = await Skins.find({ 
+                        $or: skinSearchConditions,
+                        active: true // Asegurarse de que las skins estén activas
+                    })
+                    .populate('champion') // Poblar campeón para poder buscar también por nombre de campeón
+                    .exec();
+                    
+                    console.log(`Encontradas ${matchingSkins.length} skins que coinciden con la búsqueda`);
+                    
+                    // Filtrar también por nombre de campeón
+                    const filteredSkins = matchingSkins.filter(skin => {
+                        // Si ya coincide por nombre de skin, incluirla
+                        const skinNameMatches = keywords.some(keyword => 
+                            skin.NombreSkin.toLowerCase().includes(keyword.toLowerCase())
+                        );
+                        
+                        if (skinNameMatches) return true;
+                        
+                        // Comprobar si coincide por nombre de campeón
+                        if (skin.champion && skin.champion.name) {
+                            return keywords.some(keyword => 
+                                skin.champion.name.toLowerCase().includes(keyword.toLowerCase())
+                            );
+                        }
+                        
+                        return false;
+                    });
+                    
+                    console.log(`Después de filtrar por campeón: ${filteredSkins.length} skins`);
+                    
+                    // Obtener los IDs de las skins filtradas
+                    const skinIds = filteredSkins.map(skin => skin._id);
+                    
+                    // Si no encontramos skins, devolver array vacío
+                    if (skinIds.length === 0) {
+                        console.log("No se encontraron skins que coincidan con los términos");
+                        // Añadir una condición imposible para que no devuelva resultados
+                        query._id = { $in: [] };
+                    } else {
+                        console.log(`Buscando cuentas que contengan alguna de las ${skinIds.length} skins`);
+                        
+                        // Añadir condición para buscar cuentas que tengan alguna de estas skins
+                        if (query.$and) {
+                            query.$and.push({ skins: { $in: skinIds } });
+                        } else {
+                            query.$and = [{ skins: { $in: skinIds } }];
+                        }
+                    }
+                } catch (error) {
+                    console.error("Error en la búsqueda de skins:", error);
+                    // En caso de error, continuar con la consulta original
+                }
             }
 
+            // Filtrar por región
             if (region) {
                 query.region = region;
             }
 
+            // Filtrar por nivel
             if (minLevel || maxLevel) {
                 query.nivel = {};
                 if (minLevel) query.nivel.$gte = parseInt(minLevel);
                 if (maxLevel) query.nivel.$lte = parseInt(maxLevel);
             }
 
+            // Filtrar por cantidad de RP
             if (minRP || maxRP) {
                 query.rpAmount = {};
                 if (minRP) query.rpAmount.$gte = parseInt(minRP);
                 if (maxRP) query.rpAmount.$lte = parseInt(maxRP);
             }
 
+            console.log("Consulta final MongoDB:", JSON.stringify(query, null, 2));
+
+            // Ejecutar consulta con límites de paginación
             const [unrankeds, total] = await Promise.all([
                 Unrankeds.find(query)
                     .populate('priceRP')
-                    .populate('skins') // Populate skins
+                    .populate({
+                        path: 'skins',
+                        populate: [
+                            {
+                                path: 'champion',
+                                model: 'Champion'
+                            },
+                            {
+                                path: 'priceRP',
+                                model: 'RPPrice'
+                            }
+                        ]
+                    })
                     .sort({ createdAt: -1 })
                     .skip(skip)
                     .limit(parseInt(limit)),
                 Unrankeds.countDocuments(query)
             ]);
 
+            // Formatear resultados para la respuesta
             res.json({
                 data: unrankeds,
                 total,
@@ -203,6 +371,7 @@ const unrankedsController = {
                 hasMore: skip + unrankeds.length < total
             });
         } catch (error) {
+            console.error("Error al obtener cuentas unranked:", error);
             next(error);
         }
     },
@@ -218,7 +387,13 @@ const unrankedsController = {
 
             const unranked = await Unrankeds.findById(id)
                 .populate('priceRP')
-                .populate('skins');
+                .populate({
+                    path: 'skins',
+                    populate: {
+                        path: 'champion',
+                        model: 'Champion'
+                    }
+                });
 
             if (!unranked) {
                 throw new CustomError('Cuenta unranked no encontrada', 404);
@@ -275,6 +450,18 @@ const unrankedsController = {
                 console.log(`Skins válidas después de filtrar: ${updateData.skins.length}`);
             }
 
+            // Procesar el stock si se proporciona
+            if (updateData.stock) {
+                updateData.stock = parseInt(updateData.stock);
+                
+                // Si el stock llega a 0 o es negativo, desactivar la cuenta
+                if (updateData.stock <= 0) {
+                    console.log(`Stock en 0 o negativo (${updateData.stock}), desactivando cuenta`);
+                    updateData.stock = 0;
+                    updateData.active = false;
+                }
+            }
+            
             // Manejar la imagen si se proporciona una nueva
             if (req.file) {
                 const currentUnranked = await Unrankeds.findById(id);
@@ -293,7 +480,13 @@ const unrankedsController = {
                 { new: true, runValidators: true }
             )
             .populate('priceRP')
-            .populate('skins');
+            .populate({
+                path: 'skins',
+                populate: {
+                    path: 'champion',
+                    model: 'Champion'
+                }
+            });
 
             if (!updatedUnranked) {
                 throw new CustomError('Cuenta unranked no encontrada', 404);
@@ -451,6 +644,74 @@ const unrankedsController = {
 
             res.status(200).json(updatedUnranked);
         } catch (error) {
+            next(error);
+        }
+    },
+
+    // Actualizar stock de una cuenta unranked
+    async updateStockUnranked(req, res, next) {
+        try {
+            console.error('UNRANKED - Iniciando actualización de stock');
+            const { id } = req.params;
+            const { quantity } = req.body;
+            console.error(`UNRANKED - ID de la cuenta: ${id}, Cantidad: ${quantity}`);
+            
+            // Validar que quantity sea un número
+            if (isNaN(quantity)) {
+                console.error('UNRANKED - Error: La cantidad no es un número válido');
+                throw new CustomError('La cantidad debe ser un número', 400);
+            }
+            
+            // Convertir a entero
+            const stockChange = parseInt(quantity);
+            console.error(`UNRANKED - Cambio de stock a realizar: ${stockChange}`);
+            
+            // Buscar la cuenta actual para obtener el stock actual
+            console.error(`UNRANKED - Buscando cuenta con ID: ${id}`);
+            const currentUnranked = await Unrankeds.findById(id);
+            if (!currentUnranked) {
+                console.error(`UNRANKED - Error: Cuenta ${id} no encontrada`);
+                throw new CustomError('Cuenta unranked no encontrada', 404);
+            }
+            console.error(`UNRANKED - Cuenta encontrada: ${currentUnranked.titulo}`);
+            console.error(`UNRANKED - Stock actual: ${currentUnranked.stock}, Activa: ${currentUnranked.active}`);
+            
+            // Calcular el nuevo stock
+            let newStock = currentUnranked.stock + stockChange;
+            console.error(`UNRANKED - Nuevo stock calculado: ${currentUnranked.stock} + ${stockChange} = ${newStock}`);
+            
+            // No permitir stocks negativos
+            if (newStock < 0) {
+                console.error(`UNRANKED - Error: El stock resultante sería negativo (${newStock})`);
+                throw new CustomError('El stock no puede ser negativo', 400);
+            }
+            
+            // Si el stock llega a 0, desactivar la cuenta
+            const updateData = { stock: newStock };
+            if (newStock === 0) {
+                updateData.active = false;
+                console.error(`UNRANKED - Stock llegó a 0, desactivando cuenta ${id}`);
+            }
+            
+            // Actualizar el stock (y posiblemente el estado active)
+            console.error(`UNRANKED - Actualizando en la base de datos: ${JSON.stringify(updateData)}`);
+            const updatedUnranked = await Unrankeds.findByIdAndUpdate(
+                id,
+                updateData,
+                { new: true, runValidators: true }
+            )
+            .populate('priceRP')
+            .populate('skins');
+            
+            console.error(`UNRANKED - Stock actualizado para cuenta ${id}: ${currentUnranked.stock} -> ${newStock}`);
+            console.error(`UNRANKED - Nuevo estado: Stock=${updatedUnranked.stock}, Activa=${updatedUnranked.active}`);
+            
+            res.status(200).json({
+                message: `Stock actualizado correctamente`,
+                unranked: updatedUnranked
+            });
+        } catch (error) {
+            console.error("UNRANKED - Error actualizando stock:", error);
             next(error);
         }
     }

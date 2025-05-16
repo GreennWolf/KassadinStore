@@ -8,6 +8,7 @@ import Tienda from "./pages/Tienda";
 import Perfil from "./pages/Perfil";
 import Eloboost from "./pages/Eloboost";
 import Checkout from "./pages/Checkout";
+import EloboostCheckout from "./pages/EloboostCheckout";
 import Admin from "./pages/Admin";
 import Unrankeds from "./pages/Unrankeds.jsx";
 import { CurrencyProvider } from './context/currencyContext.jsx'
@@ -41,6 +42,7 @@ const App = () => (
                     <Route path="/tienda/:category" element={<Tienda />} />
                     <Route path="/perfil" element={<Perfil />} />
                     <Route path="/eloboost" element={<Eloboost />} />
+                    <Route path="/eloboost-checkout" element={<EloboostCheckout />} />
                     <Route path="/comprar" element={<Checkout />} />
                     <Route path="/admin" element={<Admin />} />
                     <Route path="/tiendaOro/:category" element={<TiendaGold />} />

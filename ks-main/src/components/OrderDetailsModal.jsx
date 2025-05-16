@@ -273,8 +273,32 @@ const OrderDetailsModal = ({ isOpen, onClose, order, onOrderUpdated, statuses, a
 
   const handleStatusChange = async (newStatusId) => {
     try {
-      await updatePurchase(currentOrder._id, { status: newStatusId });
+      console.log('=== INICIO CAMBIO DE ESTADO (FRONTEND) ===');
+      console.log('ID de la orden:', currentOrder._id);
+      console.log('Estado anterior:', JSON.stringify({
+        id: currentOrder.status?.statusId?._id,
+        nombre: statusList.find(s => s._id === currentOrder.status?.statusId?._id)?.status || 'Desconocido'
+      }));
+      
       const selectedStatusData = statusList.find(s => s._id === newStatusId);
+      console.log('Nuevo estado seleccionado:', JSON.stringify({
+        id: newStatusId,
+        nombre: selectedStatusData?.status || 'Desconocido',
+        esCompletado: selectedStatusData?.status === 'Completado' || selectedStatusData?.status === 'Finalizado' || selectedStatusData?.status === 'Procesado'
+      }));
+      
+      // Verificar contenido de la orden
+      console.log('Items en la orden:', JSON.stringify(currentOrder.items?.map(item => ({
+        id: item.itemId?._id || item.itemId,
+        tipo: item.itemType,
+        cantidad: item.quantity
+      }))));
+      
+      // Llamar al servicio para actualizar el estado
+      console.log('Llamando a updatePurchase con:', currentOrder._id, { status: newStatusId });
+      const response = await updatePurchase(currentOrder._id, { status: newStatusId });
+      console.log('Respuesta del servidor:', response);
+      
       const updatedOrder = {
         ...currentOrder,
         status: {
@@ -285,11 +309,15 @@ const OrderDetailsModal = ({ isOpen, onClose, order, onOrderUpdated, statuses, a
       };
       setCurrentOrder(updatedOrder);
       toast.success('Estado actualizado exitosamente');
+      
       if (onOrderUpdated) {
+        console.log('Llamando a onOrderUpdated con:', currentOrder._id, newStatusId, selectedStatusData);
         onOrderUpdated(currentOrder._id, newStatusId, selectedStatusData);
       }
+      console.log('=== FIN CAMBIO DE ESTADO (FRONTEND) ===');
     } catch (error) {
       console.error('Error updating status:', error);
+      console.error('Stack trace:', error.stack);
       toast.error('Error al actualizar el estado');
     }
   };

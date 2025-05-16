@@ -302,6 +302,13 @@ export default function Checkout() {
   const onSubmit = async (values) => {
     setIsSubmitting(true);
     try {
+      console.log('CHECKOUT - Inicio proceso de compra');
+      console.log('CHECKOUT - Items en el carrito:', cartItems);
+      
+      // Verificar si hay unrankeds en el carrito
+      const unrankedItems = cartItems.filter(item => item.isUnranked === true || item.itemType === 'Unranked');
+      console.log('CHECKOUT - Items unranked en el carrito:', unrankedItems);
+      
       const data = {
         items: cartItems,
         paymentMethodId: values.paymentMethod,
@@ -315,11 +322,18 @@ export default function Checkout() {
         // Enviamos los IDs de ítems a los que se aplicará el cupón; ahora cada ítem tendrá su cantidad (selectedForCoupon)
         couponItems: cartItems.filter(item => item.selectedForCoupon > 0).map(item => item._id)
       };
-      await createPurchase(data);
+      
+      console.log('CHECKOUT - Datos a enviar al backend:', data);
+      console.log('CHECKOUT - Llamando a createPurchase');
+      const result = await createPurchase(data);
+      console.log('CHECKOUT - Respuesta de createPurchase:', result);
+      
+      console.log('CHECKOUT - Limpiando carrito');
       clearCart();
+      console.log('CHECKOUT - Avanzando al siguiente paso');
       handleNext();
     } catch (error) {
-      console.error("Error creating purchase:", error);
+      console.error("CHECKOUT - Error creating purchase:", error);
     } finally {
       setIsSubmitting(false);
     }
@@ -674,17 +688,17 @@ export default function Checkout() {
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Server</FormLabel>
-                        <Select {...field} required onValueChange={field.onChange} defaultValue={field.value} aria-invalid={form.formState.errors.server ? "true" : "false"}>
-                          <FormControl>
-                            <SelectTrigger>
+                        <FormControl>
+                          <Select onValueChange={field.onChange} value={field.value}>
+                            <SelectTrigger aria-invalid={form.formState.errors.server ? "true" : "false"}>
                               <SelectValue placeholder="Select your server" />
                             </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem className="bg-black text-white" value="LAS">LAS</SelectItem>
-                            <SelectItem className="bg-black text-white" value="LAN">LAN</SelectItem>
-                          </SelectContent>
-                        </Select>
+                            <SelectContent>
+                              <SelectItem className="bg-black text-white" value="LAS">LAS</SelectItem>
+                              <SelectItem className="bg-black text-white" value="LAN">LAN</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}

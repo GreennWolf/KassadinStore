@@ -19,41 +19,47 @@ const UnrankedSchema = new mongoose.Schema({
         required: false,
     },
     escencia:{
-        type:Number,
-        default:false,
+        type: Number,
+        default: 0,
     },
     nivel:{
-        type:Number,
-        required:true,
+        type: Number,
+        required: true,
     },
     rpAmount:{
-        type:Number,
-        require:true,
+        type: Number,
+        required: true,
     },
     escenciaNaranja:{
-        type:Number,
-        require:true,
+        type: Number,
+        required: true,
     },
     region:{
-        type:String,
-        default:true,  
+        type: String,
+        default: true,  
         enum: ['LAS', 'LAN', 'NA', 'EUW', 'EUNE', 'OCE', 'BR', 'KR', 'JP', 'TR', 'RU'], 
-        required:true,
+        required: true,
     },
     handUpgrade:{
-        type:Boolean,
-        default:true,
-        required:true,
+        type: Boolean,
+        default: true,
+        required: true,
     },
     skins: {
         type: [mongoose.Schema.Types.ObjectId],
         ref: 'Skin',
         default: [],
     },
+    stock: {
+        type: Number,
+        default: 1,
+        required: true,
+        min: 0
+    },
     active:{
-        type:Boolean,
-        default:true,   
-        required:true,
+        type: Boolean,
+        default: true,   
+        required: true,
     }
 });
 

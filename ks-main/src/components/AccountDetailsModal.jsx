@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Copy, Check, Edit, Save, X } from 'lucide-react';
+import { Copy, Check, Edit, Save, X, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { chargeAccountData } from '../services/purcharseService';
 
@@ -12,6 +12,7 @@ const AccountDetailsModal = ({ isOpen, onClose, account, currentOrder, admin, it
   const [copiedEmail, setCopiedEmail] = useState(false);
   const [copiedPassword, setCopiedPassword] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const [accountData, setAccountData] = useState({
     email: '',
     password: ''
@@ -84,12 +85,23 @@ const AccountDetailsModal = ({ isOpen, onClose, account, currentOrder, admin, it
               </div>
               <div className="space-y-2">
                 <Label>Contraseña</Label>
-                <Input
-                  type="text"
-                  value={accountData.password}
-                  onChange={(e) => setAccountData(prev => ({ ...prev, password: e.target.value }))}
-                  placeholder="Contraseña de la cuenta"
-                />
+                <div className="relative">
+                  <Input
+                    type={showPassword ? "text" : "password"}
+                    value={accountData.password}
+                    onChange={(e) => setAccountData(prev => ({ ...prev, password: e.target.value }))}
+                    placeholder="Contraseña de la cuenta"
+                    className="pr-10"
+                  />
+                  <button
+                    type="button"
+                    className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-500 hover:text-gray-700"
+                    onClick={() => setShowPassword(!showPassword)}
+                    tabIndex="-1"
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
               </div>
               <Button className="w-full" onClick={handleSaveAccount}>
                 Cargar Cuenta
@@ -150,12 +162,23 @@ const AccountDetailsModal = ({ isOpen, onClose, account, currentOrder, admin, it
               </div>
               <div className="space-y-2">
                 <Label>Contraseña</Label>
-                <Input
-                  type="text"
-                  value={accountData.password}
-                  onChange={(e) => setAccountData(prev => ({ ...prev, password: e.target.value }))}
-                  placeholder="Contraseña de la cuenta"
-                />
+                <div className="relative">
+                  <Input
+                    type={showPassword ? "text" : "password"}
+                    value={accountData.password}
+                    onChange={(e) => setAccountData(prev => ({ ...prev, password: e.target.value }))}
+                    placeholder="Contraseña de la cuenta"
+                    className="pr-10"
+                  />
+                  <button
+                    type="button"
+                    className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-500 hover:text-gray-700"
+                    onClick={() => setShowPassword(!showPassword)}
+                    tabIndex="-1"
+                  >
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
               </div>
               <Button className="w-full" onClick={handleSaveAccount}>
                 <Save className="w-4 h-4 mr-2" />

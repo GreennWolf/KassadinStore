@@ -384,6 +384,19 @@ async function validatePurchaseItems(items, selectedCurrency) {
     if (!itemData?.priceRP) {
       throw new CustomError(`Item no encontrado o sin precio: ${item.itemId}`, 404);
     }
+    
+    // Verificar stock para items de tipo Unranked
+    if (item.isUnranked) {
+      // La cuenta debe estar activa
+      if (!itemData.active) {
+        throw new CustomError(`La cuenta unranked ${item.itemId} no está disponible actualmente`, 400);
+      }
+      
+      // Verificar stock disponible
+      if (itemData.stock !== undefined && itemData.stock < item.quantity) {
+        throw new CustomError(`Stock insuficiente para la cuenta ${itemData.titulo || item.itemId}. Stock disponible: ${itemData.stock}, Cantidad solicitada: ${item.quantity}`, 400);
+      }
+    }
 
     const rpPriceDoc = await RPPrice.findById(itemData.priceRP);
     if (rpPriceDoc) {
@@ -610,7 +623,19 @@ const purchaseController = {
   createPurchase: async (req, res, next) => {
     try {
       // Se espera recibir cuponId (ya sea ObjectId para cupón normal o código para reward coupon)
-      const { userId, items, paymentMethodId, riotName, discordName, region, selectedCurrency, cuponId } = req.body;
+      const { 
+        userId, 
+        items, 
+        paymentMethodId, 
+        riotName, 
+        discordName, 
+        region, 
+        selectedCurrency, 
+        cuponId,
+        orderType,
+        orderId 
+      } = req.body;
+      
       if (!riotName || !req.file) {
         throw new CustomError('Faltan datos requeridos', 400);
       }
@@ -621,26 +646,60 @@ const purchaseController = {
       }
   
       await ensureReceiptsDir();
+      
+      let itemsWithQuantity = [];
+      let totalPrice = 0;
+      let totalRP = 0;
+      let discountAmount = 0;
+      let finalPrice = 0;
+      let couponType = null;
+      
+      // Caso especial para órdenes de EloBoost
+      if (orderType === 'eloboost' && orderId) {
+        // Importar modelo de EloBoostOrder solo cuando sea necesario
+        const EloBoostOrder = require('../database/Models/eloBoostOrderModel');
+        
+        // Obtener la orden de EloBoost
+        const eloBoostOrder = await EloBoostOrder.findById(orderId);
+        if (!eloBoostOrder) {
+          throw new CustomError('Orden de EloBoost no encontrada', 404);
+        }
+        
+        // Usar los detalles de la orden de EloBoost
+        totalPrice = eloBoostOrder.totalPrice;
+        finalPrice = totalPrice; // No hay descuento en este caso
+        totalRP = 0; // No hay RP en EloBoost
+        
+        // No hay items en este caso
+        itemsWithQuantity = [];
+      } else {
+        // Caso normal para compras de skins/items
+        const jsItemsObject = JSON.parse(items);
+        const validatedItems = await validatePurchaseItems(jsItemsObject, selectedCurrency);
+        
+        itemsWithQuantity = validatedItems.itemsWithQuantity;
+        totalPrice = validatedItems.totalPrice;
+        totalRP = validatedItems.totalRP;
   
-      const jsItemsObject = JSON.parse(items);
-      const { itemsWithQuantity, totalPrice, totalRP } = await validatePurchaseItems(jsItemsObject, selectedCurrency);
-  
-      // Validar y aplicar cupón (la función detecta si es normal o reward)
-      const { discountAmount, finalPrice, couponType } = await validateAndApplyCupon(
-        cuponId,
-        itemsWithQuantity,
-        selectedCurrency,
-        userId
-      );
+        // Validar y aplicar cupón (la función detecta si es normal o reward)
+        const couponResult = await validateAndApplyCupon(
+          cuponId,
+          itemsWithQuantity,
+          selectedCurrency,
+          userId
+        );
+        
+        discountAmount = couponResult.discountAmount;
+        finalPrice = couponResult.finalPrice;
+        couponType = couponResult.couponType;
+      }
   
       const defaultStatus = await Status.findOne({ default: true });
       if (!defaultStatus) {
         throw new CustomError('No se encontró un status por defecto', 500);
       }
   
-      // Ya no calculamos el progreso del usuario aquí
-      // Eso lo hará el admin cuando confirme la compra
-  
+      // Crear la nueva compra con los datos correspondientes
       const newPurchase = new Purchase({
         userId,
         items: itemsWithQuantity,
@@ -665,6 +724,87 @@ const purchaseController = {
         earnedXp: 0, // Inicialmente 0, se actualizará cuando el admin procese la compra
         progressProcessed: false, // Marcamos la compra como no procesada
       });
+      
+      // ACTUALIZACIÓN DE STOCK: Decrementamos el stock inmediatamente cuando se crea la compra
+      console.error('=== INICIO PROCESAMIENTO DE STOCK EN CREACIÓN DE COMPRA ===');
+      
+      if (itemsWithQuantity && itemsWithQuantity.length > 0) {
+        console.error(`BACKEND - La compra tiene ${itemsWithQuantity.length} items para procesar stock`);
+        
+        // Procesar los items unranked y actualizar stock
+        for (const item of itemsWithQuantity) {
+          // Verificar si es una cuenta unranked
+          if (item.itemType === 'Unranked' || item.isUnranked === true) {
+            try {
+              console.error(`BACKEND - Procesando cuenta unranked en creación de compra:`, JSON.stringify(item));
+              
+              // Obtener ID del item de forma segura
+              const itemId = item.itemId;
+              if (!itemId) {
+                console.error('BACKEND - Item sin ID válido, saltando...');
+                continue;
+              }
+              console.error(`BACKEND - ID del item unranked: ${itemId}`);
+              
+              // Cantidad a descontar (mínimo 1)
+              const quantity = Math.max(1, item.quantity || 1);
+              console.error(`BACKEND - Cantidad a descontar: ${quantity}`);
+              
+              // Obtener datos actuales de la cuenta unranked
+              console.error(`BACKEND - Buscando cuenta unranked con ID: ${itemId}`);
+              const unrankedAccount = await Unranked.findById(itemId);
+              if (!unrankedAccount) {
+                console.error(`BACKEND - Cuenta unranked no encontrada: ${itemId}`);
+                continue;
+              }
+              
+              console.error(`BACKEND - Datos actuales: Título=${unrankedAccount.titulo}, Stock=${unrankedAccount.stock}, Active=${unrankedAccount.active}`);
+              
+              // Verificar que haya stock suficiente
+              if (typeof unrankedAccount.stock !== 'number') {
+                console.error(`BACKEND - La cuenta no tiene campo stock válido. Configurando stock=0`);
+                await Unranked.findByIdAndUpdate(itemId, { stock: 0, active: false });
+                continue;
+              }
+              
+              if (unrankedAccount.stock < quantity) {
+                console.error(`BACKEND - Stock insuficiente: ${unrankedAccount.stock} < ${quantity}`);
+                continue;
+              }
+              
+              // Calcular nuevo stock
+              const newStock = Math.max(0, unrankedAccount.stock - quantity);
+              console.error(`BACKEND - Nuevo stock calculado: ${newStock}`);
+              
+              // Preparar datos de actualización
+              const updateData = { stock: newStock };
+              
+              // Si el stock llega a 0, desactivar la cuenta
+              if (newStock <= 0) {
+                updateData.active = false;
+                console.error('BACKEND - Stock llegó a 0, desactivando cuenta');
+              }
+              
+              // Actualizar en la base de datos
+              console.error(`BACKEND - Actualizando cuenta unranked ${itemId} con nuevo stock: ${newStock}`);
+              const result = await Unranked.findByIdAndUpdate(
+                itemId,
+                updateData,
+                { new: true }
+              );
+              
+              console.error(`BACKEND - Actualización exitosa: Stock=${result.stock}, Active=${result.active}`);
+            } catch (error) {
+              console.error(`BACKEND - Error procesando cuenta unranked:`, error);
+            }
+          }
+        }
+        
+        console.error('BACKEND - Procesamiento de stock en creación de compra completado');
+      } else {
+        console.error('BACKEND - No hay items en la compra o la estructura es incorrecta');
+      }
+      console.error('=== FIN PROCESAMIENTO DE STOCK EN CREACIÓN DE COMPRA ===');
   
       await newPurchase.save();
   
@@ -701,15 +841,64 @@ const purchaseController = {
 
   updatePurchase: async (req, res, next) => {
     try {
+      console.error('BACKEND - Iniciando actualización de compra');
       const { id } = req.params;
+      console.error(`BACKEND - ID de compra: ${id}`);
+      
       const updates = req.body;
+      console.error(`BACKEND - Actualizaciones recibidas: ${JSON.stringify(updates, null, 2)}`);
+
+      // Obtener la compra actual para verificar si el estado ha cambiado
+      console.error('BACKEND - Buscando compra actual...');
+      const currentPurchase = await Purchase.findById(id).populate('status.statusId');
+      if (!currentPurchase) {
+        console.error(`BACKEND - Error: Compra ${id} no encontrada`);
+        throw new CustomError('Compra no encontrada', 404);
+      }
+      console.error('BACKEND - Compra encontrada:', currentPurchase._id);
+      console.error('BACKEND - Ítems en la compra:', currentPurchase.items ? currentPurchase.items.length : 0);
+
+      // Verificar si hay unrankeds en la compra
+      const unrankedItems = currentPurchase.items.filter(item => item.itemType === 'Unranked' || item.isUnranked === true);
+      console.error(`BACKEND - Ítems unranked en la compra: ${unrankedItems.length}`);
+      
+      if (unrankedItems.length > 0) {
+        console.error('BACKEND - Detalles de ítems unranked:');
+        unrankedItems.forEach((item, index) => {
+          console.error(`BACKEND - Unranked #${index + 1}:`, 
+            `ID=${item.itemId}, ` +
+            `Tipo=${item.itemType}, ` +
+            `isUnranked=${item.isUnranked}, ` +
+            `Cantidad=${item.quantity}`);
+        });
+      }
 
       if (updates.status) {
+        console.error('BACKEND - Actualizando estado de la compra...');
         const newStatus = await Status.findById(updates.status);
         if (!newStatus) {
+          console.error(`BACKEND - Error: Estado ${updates.status} no encontrado`);
           throw new CustomError('Estado no encontrado', 404);
         }
+        console.error(`BACKEND - Nuevo estado: ${newStatus.status} (${newStatus._id})`);
 
+        // Verificar si el nuevo estado es "Completado" o "Finalizado"
+        // (usando nombre o alguna propiedad que indique que la compra se ha completado)
+        const isCompletedStatus = newStatus.status === 'Completado' || 
+                                  newStatus.status === 'Finalizado' || 
+                                  newStatus.status === 'Procesado';
+        
+        // Si el estado anterior no era completado y ahora sí lo es
+        const wasCompletedBefore = currentPurchase.status.statusId && 
+                                  (currentPurchase.status.statusId.status === 'Completado' || 
+                                   currentPurchase.status.statusId.status === 'Finalizado' ||
+                                   currentPurchase.status.statusId.status === 'Procesado');
+
+        console.error(`BACKEND - Estado actual: ${currentPurchase.status?.statusId?.status || 'No definido'}`);
+        console.error(`BACKEND - ¿Es estado completado?: ${isCompletedStatus}`);
+        console.error(`BACKEND - ¿Ya estaba completado antes?: ${wasCompletedBefore}`);
+
+        // Actualizar el estado
         updates.status = {
           statusId: newStatus._id,
           estadoConfirmado: false,
@@ -717,14 +906,28 @@ const purchaseController = {
         };
         updates.statusChangedAt = new Date();
         updates.statusChangeViewed = false;
+        console.error(`BACKEND - Estado actualizado con éxito`);
+
+        // El stock ya se actualiza al crear la compra, en el estado completado no hacemos nada
+        if (isCompletedStatus && !wasCompletedBefore) {
+          console.error(`BACKEND - Compra ${id} marcada como completada. El stock ya debería estar actualizado desde la creación de la compra.`);
+        } else {
+          console.error(`BACKEND - No hay acciones adicionales para el stock en este cambio de estado.`);
+        }
       }
 
+      console.error(`BACKEND - Aplicando actualizaciones a la compra ${id}...`);
       const updatedPurchase = await Purchase.findByIdAndUpdate(id, updates, { new: true }).populate('status.statusId');
       if (!updatedPurchase) {
+        console.error(`BACKEND - Error: Compra ${id} no encontrada al actualizar`);
         throw new CustomError('Compra no encontrada', 404);
       }
+      console.error(`BACKEND - Compra actualizada exitosamente: ${updatedPurchase._id}`);
+      console.error(`BACKEND - Nuevo estado: ${updatedPurchase.status?.statusId?.status}`);
+      
       res.json(updatedPurchase);
     } catch (error) {
+      console.error(`BACKEND - Error en updatePurchase:`, error);
       next(error);
     }
   },
@@ -1038,9 +1241,13 @@ const statusController = {
   }
 };
 
-module.exports = {
+// Combinar todos los controladores en un solo objeto para exportar
+const combinedController = {
   ...purchaseController,
   ...statusController,
   simulatePurchaseProgress,
   confirmAndUpdateUserProgress
 };
+
+// Exportar el controlador combinado
+module.exports = combinedController;

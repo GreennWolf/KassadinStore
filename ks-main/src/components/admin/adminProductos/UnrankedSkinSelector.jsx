@@ -4,25 +4,29 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Loader2, Search, X, AlertCircle } from "lucide-react";
 import { getAllSkins } from "../../../services/champsService";
+import { getAllUnrankeds } from "../../../services/unrankedService";
 import { toast } from 'sonner';
 
 /**
  * Componente para seleccionar skins para cuentas unranked.
- * Completamente rediseñado para ofrecer una experiencia fluida y estable.
+ * Mejorado para evitar cambios constantes en las imágenes durante la búsqueda.
  */
 const UnrankedSkinSelector = ({ isOpen, onClose, selectedSkins = [], onSave }) => {
     // ==================== ESTADOS ====================
     // Estados principales
     const [searchQuery, setSearchQuery] = useState('');
-    const [debouncedSearch, setDebouncedSearch] = useState(''); // Nuevo estado para búsqueda con debounce
+    const [debouncedSearch, setDebouncedSearch] = useState('');
     const [loading, setLoading] = useState(false);
-    const [showLoader, setShowLoader] = useState(false); // Nuevo estado para controlar la visualización del loader
+    const [showLoader, setShowLoader] = useState(false);
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
     
     // Estados de datos
     const [availableSkins, setAvailableSkins] = useState([]);
     const [selectedSkinsMap, setSelectedSkinsMap] = useState(new Map());
+    const [displayedSkins, setDisplayedSkins] = useState([]); // Nuevo estado para separar visualización de datos
+    const [lastSearchTerm, setLastSearchTerm] = useState(""); // Último término que causó un cambio visual
+    const [shouldUpdateDisplay, setShouldUpdateDisplay] = useState(false); // Flag para controlar actualizaciones visuales
     
     // Estado de error
     const [error, setError] = useState(null);
@@ -31,9 +35,10 @@ const UnrankedSkinSelector = ({ isOpen, onClose, selectedSkins = [], onSave }) =
     const observer = useRef(null);
     const scrollContainerRef = useRef(null);
     const lastSkinElementRef = useRef(null);
-    const searchTimeoutRef = useRef(null); // Ref para el timeout de debounce
-    const loaderTimeoutRef = useRef(null); // Ref para el timeout del loader
-    const searchInputRef = useRef(null); // Ref para mantener el focus en el input de búsqueda
+    const searchTimeoutRef = useRef(null);
+    const loaderTimeoutRef = useRef(null);
+    const searchInputRef = useRef(null);
+    const lastSearchRef = useRef("");
     
     // ==================== EFECTOS ====================
     
@@ -45,8 +50,6 @@ const UnrankedSkinSelector = ({ isOpen, onClose, selectedSkins = [], onSave }) =
         setPage(1);
         setHasMore(true);
         setError(null);
-        
-        console.log('Inicializando selector con skins:', selectedSkins);
         
         // Inicializar mapa de skins seleccionadas
         const initialMap = new Map();
@@ -82,8 +85,6 @@ const UnrankedSkinSelector = ({ isOpen, onClose, selectedSkins = [], onSave }) =
             });
         }
         
-        console.log(`Inicializadas ${initialMap.size} skins seleccionadas:`, initialMap);
-        
         setSelectedSkinsMap(initialMap);
         
         // Cargar primera página de skins
@@ -112,6 +113,44 @@ const UnrankedSkinSelector = ({ isOpen, onClose, selectedSkins = [], onSave }) =
             clearTimeout(searchTimeoutRef.current);
         }
         
+        // Normalizar texto de búsqueda (quitar acentos, convertir a minúsculas)
+        const normalizeText = (text) => {
+            return text
+                .toLowerCase()
+                .normalize("NFD").replace(/[\u0300-\u036f]/g, ""); // Eliminar acentos
+        };
+        
+        // Para ciertos campeones, agregar variaciones comunes al término de búsqueda
+        let searchTerms = [searchQuery.trim()];
+        const normalizedSearch = normalizeText(searchQuery);
+        
+        // Manejar términos de búsqueda comunes y sus variaciones
+        const searchMappings = {
+            'aa': ['aatrox'],
+            'aatro': ['aatrox'],
+            'aatrox': ['aatrox'],
+            'wuk': ['wukong', 'monkeyking'],
+            'monkey': ['wukong', 'monkeyking'],
+            'nunu': ['nunu', 'willump', 'nunu & willump'],
+            'aure': ['aurelion', 'aurelionsol', 'aurelion sol', 'asol'],
+            'sol': ['aurelion', 'aurelionsol', 'aurelion sol', 'asol'],
+            'bel': ['belveth', "bel'veth"],
+            'cho': ['chogath', "cho'gath"]
+        };
+        
+        // Buscar coincidencias para términos de búsqueda comunes
+        for (const [key, values] of Object.entries(searchMappings)) {
+            if (normalizedSearch.includes(key)) {
+                searchTerms = [...searchTerms, ...values];
+                break;
+            }
+        }
+        
+        // Solo actualizar si hay un término de búsqueda
+        if (searchQuery.trim()) {
+            console.log(`Términos de búsqueda: ${searchTerms.join(', ')}`);
+        }
+        
         // Establecer nuevo timeout para actualizar la búsqueda con debounce
         searchTimeoutRef.current = setTimeout(() => {
             setDebouncedSearch(searchQuery);
@@ -125,11 +164,26 @@ const UnrankedSkinSelector = ({ isOpen, onClose, selectedSkins = [], onSave }) =
         };
     }, [searchQuery]);
     
-    // Efecto para actualizar búsqueda cuando cambia el debouncedSearch
+    // Efecto para actualizar búsqueda en segundo plano cuando cambia el debouncedSearch
+    // IMPORTANTE: Este efecto ahora SOLO actualiza availableSkins, pero NO displayedSkins
     useEffect(() => {
         if (!isOpen) return;
+        
+        console.log(`Término de búsqueda debounced cambiado a: "${debouncedSearch}"`);
+        
+        // Guardar los IDs anteriores antes de actualizar la página
+        const previousIds = availableSkins.map(skin => skin._id);
+        
+        // Resetear la página para la búsqueda en segundo plano
         setPage(1);
-        fetchSkins(1, debouncedSearch, true);
+        
+        // El flag indica que NO queremos actualizar displayedSkins
+        // Solo queremos precargar los resultados en segundo plano
+        const forceDisplayUpdate = false;
+        
+        // Realizar la búsqueda en segundo plano (actualiza availableSkins pero no displayedSkins)
+        fetchSkins(1, debouncedSearch, true, {forceDisplayUpdate});
+        
     }, [debouncedSearch, isOpen]);
     
     // Efecto para controlar la visualización del loader
@@ -189,32 +243,143 @@ const UnrankedSkinSelector = ({ isOpen, onClose, selectedSkins = [], onSave }) =
                 observer.current.disconnect();
             }
         };
-    }, [isOpen, hasMore, loading, page, availableSkins, debouncedSearch]);
+    }, [isOpen, hasMore, loading, page, displayedSkins, debouncedSearch]);
+    
+    // Efecto para actualizar las skins mostradas de manera controlada
+    // Evita cambios constantes en la interfaz durante la búsqueda
+    useEffect(() => {
+        // Si es la primera carga de la página, siempre actualizar
+        if (page === 1 && !loading && availableSkins.length > 0) {
+            setDisplayedSkins(availableSkins);
+            return;
+        }
+        
+        // Si estamos cargando la página 1, no actualizar para evitar parpadeos
+        if (loading && page === 1) {
+            return;
+        }
+        
+        // Si estamos cargando más páginas (scroll infinito), agregar nuevos resultados
+        if (!loading && page > 1) {
+            setDisplayedSkins(prev => {
+                // Si no hay displayedSkins previos, usar availableSkins directamente
+                if (prev.length === 0) return availableSkins;
+                
+                // Obtener los IDs existentes para evitar duplicados
+                const existingIds = new Set(prev.map(s => s._id));
+                
+                // Filtrar nuevos elementos y agregarlos al final
+                const newItems = availableSkins.filter(s => !existingIds.has(s._id));
+                
+                return [...prev, ...newItems];
+            });
+        }
+        
+        // No actualizamos displayedSkins durante cambios de búsqueda
+        // Solo actualizamos cuando se completa la carga inicial o al cargar más páginas
+    }, [availableSkins, loading, page, debouncedSearch]);
     
     // ==================== FUNCIONES ====================
     
     // Cargar skins desde la API
-    const fetchSkins = async (pageNumber, query, resetList = false) => {
+    const fetchSkins = async (pageNumber, query, resetList = false, userActions = {}) => {
         if (loading) return;
+        
+        // Extraer acciones del usuario (objeto o valor booleano simple para compatibilidad)
+        const isSearchBeingErased = typeof userActions === 'object' ? userActions.isSearchBeingErased : userActions;
+        const isAddingSpace = typeof userActions === 'object' ? userActions.isAddingSpace : false;
+        const isContinuingSpacedSearch = typeof userActions === 'object' ? userActions.isContinuingSpacedSearch : false;
         
         setLoading(true);
         setError(null);
         
         try {
-            // Construir parámetros de búsqueda
-            const params = {
-                page: pageNumber, 
-                limit: 20,
-                search: query,
-                showAll: 'true'
-            };
+            // Log de depuración para ver qué términos de búsqueda se están utilizando
+            console.log(`Buscando con término: "${query}", página: ${pageNumber}, resetList: ${resetList}
+            Acciones: Borrado=${isSearchBeingErased}, Espacio=${isAddingSpace}, Continuando=${isContinuingSpacedSearch}`);
             
-            // Realizar petición
-            const response = await getAllSkins(params);
+            // Preparar el término de búsqueda para hacerlo más inclusivo
+            let processedQuery = query;
+            
+            // Con la mejora en el backend, ya no necesitamos procesar las búsquedas con espacios
+            // El backend ahora maneja directamente los espacios como búsquedas inclusivas
+            if (query.includes(' ')) {
+                // Simplemente normalizar eliminando espacios múltiples y recortando
+                processedQuery = query.trim().replace(/\s+/g, ' ');
+                console.log(`Búsqueda con espacios - original: "${query}", normalizada: "${processedQuery}"`);
+            }
+            
+            // Decidir qué endpoint usar según el tipo de búsqueda
+            let response;
+            
+            // Si hay un término de búsqueda, es más efectivo buscar en el endpoint de unrankeds
+            // que maneja mejor la búsqueda por skins dentro de una cuenta
+            if (processedQuery && processedQuery.trim().length > 0) {
+                console.log("Usando endpoint de unrankeds para búsqueda por skin:", processedQuery);
+                
+                const unrankedParams = {
+                    page: pageNumber,
+                    limit: 20,
+                    skinSearch: processedQuery, // Usar skinSearch para búsqueda específica de skins
+                    showAll: 'true',
+                    includeSearch: 'true' // Habilitar búsqueda inclusiva
+                };
+                
+                // Obtener cuentas unranked que tengan skins coincidentes
+                const unrankedResponse = await getAllUnrankeds(unrankedParams);
+                
+                if (!unrankedResponse || !unrankedResponse.data) {
+                    throw new Error('No se recibieron datos del servidor');
+                }
+                
+                // Extraer skins de las cuentas encontradas
+                const allSkins = [];
+                const skinsMap = new Map(); // Para evitar duplicados
+                
+                // Procesar cada cuenta y sus skins
+                unrankedResponse.data.forEach(account => {
+                    if (account.skins && Array.isArray(account.skins)) {
+                        account.skins.forEach(skin => {
+                            // Evitar duplicados usando un Map con el ID como clave
+                            if (skin && skin._id && !skinsMap.has(skin._id)) {
+                                skinsMap.set(skin._id, skin);
+                                allSkins.push(skin);
+                            }
+                        });
+                    }
+                });
+                
+                // Construir respuesta en formato compatible con el código existente
+                response = {
+                    data: allSkins,
+                    total: allSkins.length,
+                    currentPage: 1,
+                    totalPages: 1,
+                    hasMore: false
+                };
+                
+                console.log(`Encontradas ${allSkins.length} skins únicas en las cuentas unranked`);
+            } else {
+                // Para búsquedas vacías o carga inicial, usar el endpoint original de skins
+                console.log("Usando endpoint de skins para búsqueda general");
+                
+                const skinParams = {
+                    page: pageNumber, 
+                    limit: 20,
+                    search: processedQuery,
+                    showAll: 'true',
+                    includeSearch: 'true' // Siempre utilizamos búsqueda inclusiva
+                };
+                
+                // Realizar petición original
+                response = await getAllSkins(skinParams);
+            }
             
             if (!response || !response.data) {
                 throw new Error('No se recibieron datos del servidor');
             }
+            
+            console.log(`Resultados de búsqueda para "${query}":`, response.data.length);
             
             // Procesar skins - asegurar URLs de imágenes correctas
             const API_BASE_URL = `${import.meta.env.VITE_API_URL}/images/`;
@@ -229,17 +394,70 @@ const UnrankedSkinSelector = ({ isOpen, onClose, selectedSkins = [], onSave }) =
                     (skin.srcWeb || null)
             }));
             
-            // Actualizar estado
+            // Actualizar estado de availableSkins (datos en segundo plano)
             setAvailableSkins(prevSkins => {
+                let newState;
                 if (resetList) {
-                    return processedSkins;
+                    // Si estamos reseteando, actualizar completamente
+                    newState = processedSkins;
                 } else {
-                    // Filtrar duplicados
+                    // En caso de scroll infinito, agregar sin duplicados
                     const existingIds = new Set(prevSkins.map(s => s._id));
                     const newSkins = processedSkins.filter(s => !existingIds.has(s._id));
-                    return [...prevSkins, ...newSkins];
+                    newState = [...prevSkins, ...newSkins];
                 }
+                
+                console.log(`Actualizando availableSkins: ${newState.length} skins después de buscar "${query}"`);
+                return newState;
             });
+            
+            // LÓGICA SIMPLIFICADA:
+            // Ahora solo actualizamos displayedSkins en estos casos:
+            // 1. Cuando el usuario hace clic en botón de búsqueda (forceDisplayUpdate)
+            // 2. Cuando el usuario presiona Enter (forceDisplayUpdate)
+            // 3. En la carga inicial cuando no hay skins mostradas
+            
+            // Extraer el flag para forzar la actualización de la visualización
+            const forceDisplayUpdate = typeof userActions === 'object' && userActions.forceDisplayUpdate;
+            
+            // Verificar si hay resultados actuales y previos
+            const hasCurrentResults = processedSkins.length > 0;
+            const hasPreviousResults = displayedSkins.length > 0;
+            
+            // Esta es la carga inicial (sin displayedSkins aún)
+            const isInitialLoad = !hasPreviousResults && hasCurrentResults;
+            
+            console.log(`Análisis para decisión:
+            - forceDisplayUpdate: ${forceDisplayUpdate ? 'SÍ' : 'NO'}
+            - isInitialLoad: ${isInitialLoad ? 'SÍ' : 'NO'}
+            - hasCurrentResults: ${hasCurrentResults} (${processedSkins.length})
+            - hasPreviousResults: ${hasPreviousResults} (${displayedSkins.length})`);
+            
+            // DECISIÓN SENCILLA:
+            
+            if (forceDisplayUpdate && hasCurrentResults) {
+                // 1. Si se fuerza la actualización (clic en botón/Enter) y hay resultados, actualizar
+                console.log(`✅ Actualizando displayedSkins forzadamente con ${processedSkins.length} skins para "${query}"`);
+                setDisplayedSkins(processedSkins);
+                
+                // Guardar el término que causó este cambio visual
+                setLastSearchTerm(query);
+                
+            } else if (isInitialLoad) {
+                // 2. Carga inicial - mostrar todo cuando no hay nada mostrado aún
+                console.log("🔄 Carga inicial - mostrando todas las skins");
+                setDisplayedSkins(processedSkins);
+                
+            } else {
+                // 3. En todos los demás casos, mantener la visualización actual
+                console.log("ℹ️ Conservando visualización actual - sin cambios en displayedSkins");
+                
+                // Opcional: Si se fuerza pero no hay resultados, mostrar mensaje específico
+                if (forceDisplayUpdate && !hasCurrentResults) {
+                    console.log("⚠️ Búsqueda forzada sin resultados");
+                    // Se podría mostrar algún mensaje o notificación específica
+                }
+            }
             
             // Actualizar si hay más páginas
             setHasMore(!!response.hasMore);
@@ -396,17 +614,42 @@ const UnrankedSkinSelector = ({ isOpen, onClose, selectedSkins = [], onSave }) =
 
     // Manejo optimizado de la búsqueda
     const handleSearchChange = useCallback((e) => {
-        setSearchQuery(e.target.value);
-    }, []);
+        const newValue = e.target.value;
+        
+        // Detectar si se está borrando texto (para mejorar aún más la detección)
+        // Comparamos con searchQuery en vez de debouncedSearch para tener una detección más inmediata
+        if (searchQuery.length > newValue.length && searchQuery.startsWith(newValue)) {
+            console.log("🔍 Detectado borrado en handleSearchChange - manteniendo visualización");
+            // Se está borrando - no necesitamos hacer nada especial aquí,
+            // la lógica principal está en el efecto de debouncedSearch
+        } else if (newValue.length > searchQuery.length) {
+            console.log("🔍 Detectada escritura en handleSearchChange");
+            // Se está escribiendo
+        }
+        
+        // Actualizar el valor de búsqueda (el comportamiento normal)
+        setSearchQuery(newValue);
+    }, [searchQuery]);
 
     // Manejo optimizado para limpiar la búsqueda
     const clearSearch = useCallback(() => {
         setSearchQuery('');
+        
+        // Limpiar también el término de búsqueda que causó la última actualización visual
+        if (lastSearchTerm !== "") {
+            // Solo activar una búsqueda si habíamos buscado algo antes
+            setShouldUpdateDisplay(true);
+            setLastSearchTerm("");
+            
+            // Realizar una búsqueda vacía para mostrar todos los resultados
+            fetchSkins(1, "", true, {forceDisplayUpdate: true});
+        }
+        
         // Enfocar el input después de limpiar la búsqueda
         if (searchInputRef.current) {
             searchInputRef.current.focus();
         }
-    }, []);
+    }, [lastSearchTerm]);
     
     // ==================== RENDERIZADO ====================
     
@@ -427,21 +670,49 @@ const UnrankedSkinSelector = ({ isOpen, onClose, selectedSkins = [], onSave }) =
                                     placeholder="Buscar skins..."
                                     value={searchQuery}
                                     onChange={handleSearchChange}
-                                    className="pl-8 pr-8"
+                                    className="pl-8 pr-20"
                                     disabled={loading}
                                     ref={searchInputRef}
                                     autoComplete="off"
+                                    onKeyDown={(e) => {
+                                        // Actualizar al presionar Enter
+                                        if (e.key === 'Enter') {
+                                            e.preventDefault();
+                                            setShouldUpdateDisplay(true);
+                                            setLastSearchTerm(searchQuery);
+                                            // Usar directamente el término sin procesamiento especial, 
+                                            // el backend ahora maneja correctamente las búsquedas con espacios
+                                            fetchSkins(1, searchQuery, true, {forceDisplayUpdate: true});
+                                        }
+                                    }}
                                 />
-                                {searchQuery && (
+                                <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex items-center space-x-1">
                                     <button 
-                                        className="absolute right-2 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                                        onClick={clearSearch}
+                                        className="inline-flex items-center justify-center px-2 py-1 text-xs font-medium bg-primary text-primary-foreground rounded hover:bg-primary/90"
+                                        onClick={() => {
+                                            setShouldUpdateDisplay(true);
+                                            setLastSearchTerm(searchQuery);
+                                            // Usar directamente el término de búsqueda, el backend maneja espacios correctamente
+                                            fetchSkins(1, searchQuery, true, {forceDisplayUpdate: true});
+                                        }}
                                         type="button"
-                                        aria-label="Limpiar búsqueda"
+                                        disabled={loading}
+                                        title="Buscar"
                                     >
-                                        <X className="h-4 w-4" />
+                                        Buscar
                                     </button>
-                                )}
+                                    
+                                    {searchQuery && (
+                                        <button 
+                                            className="text-muted-foreground hover:text-foreground"
+                                            onClick={clearSearch}
+                                            type="button"
+                                            aria-label="Limpiar búsqueda"
+                                        >
+                                            <X className="h-4 w-4" />
+                                        </button>
+                                    )}
+                                </div>
                             </div>
                             {debouncedSearch !== searchQuery && loading && (
                                 <div className="text-xs text-muted-foreground flex items-center mt-1">
@@ -472,11 +743,11 @@ const UnrankedSkinSelector = ({ isOpen, onClose, selectedSkins = [], onSave }) =
                                         Reintentar
                                     </Button>
                                 </div>
-                            ) : availableSkins.length > 0 ? (
+                            ) : displayedSkins.length > 0 ? (
                                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                                    {availableSkins.map((skin, index) => {
+                                    {displayedSkins.map((skin, index) => {
                                         // Determinar si es el último elemento para el observer
-                                        const isLastItem = index === availableSkins.length - 1;
+                                        const isLastItem = index === displayedSkins.length - 1;
                                         
                                         return (
                                             <div 
@@ -528,14 +799,37 @@ const UnrankedSkinSelector = ({ isOpen, onClose, selectedSkins = [], onSave }) =
                                         );
                                     })}
                                 </div>
+                            ) : loading && debouncedSearch ? (
+                                <div className="flex flex-col justify-center items-center h-full">
+                                    <Loader2 className="h-6 w-6 animate-spin text-primary mb-2" />
+                                    <span>Buscando "{debouncedSearch}"...</span>
+                                </div>
+                            ) : debouncedSearch && availableSkins.length === 0 ? (
+                                <div className="flex flex-col justify-center items-center h-full text-muted-foreground py-8">
+                                    <div className="text-center mb-3">
+                                        No se encontraron skins que coincidan con "{debouncedSearch}"
+                                    </div>
+                                    <Button 
+                                        variant="outline" 
+                                        size="sm" 
+                                        onClick={() => {
+                                            setSearchQuery("");
+                                            if (searchInputRef.current) {
+                                                searchInputRef.current.focus();
+                                            }
+                                        }}
+                                    >
+                                        Limpiar búsqueda
+                                    </Button>
+                                </div>
                             ) : (
                                 <div className="flex justify-center items-center h-full text-muted-foreground">
-                                    {debouncedSearch ? 'No se encontraron skins que coincidan con la búsqueda' : 'No se encontraron skins'}
+                                    No se encontraron skins
                                 </div>
                             )}
                             
                             {/* Indicador de carga más */}
-                            {showLoader && availableSkins.length > 0 && (
+                            {showLoader && displayedSkins.length > 0 && hasMore && (
                                 <div className="flex justify-center items-center py-4">
                                     <Loader2 className="h-5 w-5 animate-spin text-primary mr-2" />
                                     <span className="text-sm">Cargando más skins...</span>

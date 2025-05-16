@@ -1,6 +1,18 @@
 // errorHandler.js
+const logger = require('../utils/logger');
+const config = require('../config/config');
+
 const errorHandler = (err, req, res, next) => {
-    console.error('Error:', err);
+    // Log detailed error information
+    logger.error(`${err.name}: ${err.message}`, { 
+        stack: err.stack,
+        path: req.path,
+        method: req.method,
+        body: req.body,
+        params: req.params,
+        query: req.query,
+        user: req.user ? req.user.id : 'Unauthenticated'
+    });
 
     // Errores de Multer
     if (err.name === 'MulterError') {
@@ -41,7 +53,7 @@ const errorHandler = (err, req, res, next) => {
     return res.status(500).json({
         status: 'error',
         message: 'Error interno del servidor',
-        details: process.env.NODE_ENV === 'development' ? err.message : 'Contacte al administrador'
+        details: config.env === 'development' ? err.message : 'Contacte al administrador'
     });
 };
 

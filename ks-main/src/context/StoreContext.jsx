@@ -26,6 +26,37 @@ export const StoreProvider = ({ children }) => {
     } else if (isUnranked) {
       itemType = 'Unranked';
       itemDescription = `Cuenta ${item.region} - Nivel ${item.nivel}`;
+      
+      // Verificar el stock para unrankeds
+      if (item.stock !== undefined) {
+        // Verificar si hay stock disponible
+        if (item.stock <= 0) {
+          toast.error("No hay stock disponible", {
+            description: "Esta cuenta no tiene stock disponible",
+            position: "bottom-right",
+            duration: 3000,
+          });
+          return; // Salir de la función si no hay stock
+        }
+        
+        // Verificar si ya hay unidades en el carrito y si exceden el stock disponible
+        const currentCartItem = cart.find(cartItem => 
+          cartItem._id === item._id && 
+          cartItem.isUnranked === true
+        );
+        
+        if (currentCartItem) {
+          const currentQuantity = currentCartItem.quantity || 0;
+          if (currentQuantity >= item.stock) {
+            toast.error("Stock insuficiente", {
+              description: `Solo hay ${item.stock} unidades disponibles de esta cuenta`,
+              position: "bottom-right",
+              duration: 3000,
+            });
+            return; // Salir de la función si ya se alcanzó el stock máximo
+          }
+        }
+      }
     }
 
     setCart((prev) => {
@@ -38,9 +69,17 @@ export const StoreProvider = ({ children }) => {
       );
 
       if (existingItem) {
+        // Verificar stock antes de incrementar para unrankeds
+        if (isUnranked && item.stock !== undefined) {
+          // Si la cantidad actual más 1 supera el stock, no permitir la adición
+          if (existingItem.quantity + 1 > item.stock) {
+            return prev; // Mantener el carrito sin cambios
+          }
+        }
+        
         fbq('track', 'AddToCart', {content_ids: existingItem._id, content_type: itemType ,contents:existingItem});
         return prev.map((cartItem) =>
-          cartItem._id === item._id
+          cartItem._id === item._id && cartItem.isSeguroRP === isSeguroRP && cartItem.isUnranked === isUnranked
             ? { ...cartItem, quantity: cartItem.quantity + 1 }
             : cartItem
         );

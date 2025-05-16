@@ -155,24 +155,46 @@ export const getAllUnrankeds = async (params = {}) => {
             page = 1, 
             limit = 20, 
             search = '', 
+            skinSearch = '', // Nueva opción para búsqueda de skins
             region,
             minLevel,
             maxLevel,
             minRP,
             maxRP,
-            showAll = false 
+            showAll = false,
+            includeSearch = false // Para búsqueda inclusiva
         } = params;
+
+        console.log("Parámetros de búsqueda en unrankedService:", params);
+
+        // Preparar la búsqueda inclusiva y manejar espacios correctamente
+        let useInclusiveSearch = includeSearch || false;
+        let processedSearch = search;
+        let processedSkinSearch = skinSearch;
+        
+        // Siempre activar búsqueda inclusiva si hay espacios en cualquier término
+        if ((search && search.includes(' ')) || (skinSearch && skinSearch.includes(' '))) {
+            useInclusiveSearch = true;
+            console.log("Activando búsqueda inclusiva automáticamente debido a espacios");
+        }
+        
+        // Depuración de los términos de búsqueda
+        if (search) console.log(`Búsqueda general: "${search}"`);
+        if (skinSearch) console.log(`Búsqueda de skins: "${skinSearch}"`);
+        console.log(`Búsqueda inclusiva: ${useInclusiveSearch ? 'Activada' : 'Desactivada'}`);
 
         const queryParams = new URLSearchParams({
             page: page.toString(),
             limit: limit.toString(),
             search: search || '',
+            ...(skinSearch && { skinSearch }),
             ...(region && { region }),
             ...(minLevel && { minLevel: minLevel.toString() }),
             ...(maxLevel && { maxLevel: maxLevel.toString() }),
             ...(minRP && { minRP: minRP.toString() }),
             ...(maxRP && { maxRP: maxRP.toString() }),
-            ...(showAll && { showAll: showAll.toString() })
+            ...(showAll && { showAll: showAll.toString() }),
+            ...(useInclusiveSearch && { includeSearch: 'true' })
         });
 
         const response = await axios.get(`${API_BASE_URL}/unrankeds?${queryParams}`);

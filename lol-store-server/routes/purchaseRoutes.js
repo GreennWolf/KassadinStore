@@ -1,5 +1,7 @@
 const express = require('express');
 const upload = require('../middlewares/multerConfig'); // Asegúrate de la ruta correcta
+const path = require('path');
+// Importar directamente desde el controlador
 const { 
     createPurchase, 
     getAllPurchases, 
@@ -20,7 +22,6 @@ const {
     checkCuponUsage,
     simulatePurchaseProgress,
     confirmAndUpdateUserProgress
-    
 } = require('../controllers/purcharseController');
 
 const router = express.Router();
@@ -53,5 +54,21 @@ router.post('/simulate-progress', simulatePurchaseProgress);
 
 // Añadir esta ruta en el archivo de rutas
 router.post('/:purchaseId/process-progress', confirmAndUpdateUserProgress);
+
+// Ruta para acceder a imágenes de recibos directamente
+router.get('/receiptImage/:filename', (req, res) => {
+  const { filename } = req.params;
+  if (!filename) {
+    return res.status(400).send('Nombre de archivo no proporcionado');
+  }
+  
+  const filePath = path.join(__dirname, '..', 'public', 'receipts', filename);
+  res.sendFile(filePath, (err) => {
+    if (err) {
+      console.error('Error enviando archivo:', err);
+      res.status(404).send('Imagen no encontrada');
+    }
+  });
+});
 
 module.exports = router;

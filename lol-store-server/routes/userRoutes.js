@@ -15,6 +15,8 @@ const {
     updateMultipleUsersGold
 } = require('../controllers/userController');
 
+const config = require('../config/config');
+
 const router = express.Router();
 
 // Rutas de autenticación básica
@@ -37,5 +39,15 @@ router.delete('/delete/:id', deleteUser);
 
 router.put('/update-gold/:id', updateUserGold);
 router.put('/update-multiple-gold', updateMultipleUsersGold);
+
+// Health check endpoint
+router.get('/health', (req, res) => {
+    res.status(200).json({
+        status: 'success',
+        message: 'Server is running',
+        environment: config.env,
+        timestamp: new Date().toISOString()
+    });
+});
 
 module.exports = router;

@@ -28,11 +28,21 @@ const userController = {
             });
     
             if (existingUser) {
-                throw new CustomError(
-                    'Usuario ya existe',
-                    409,
-                    existingUser.email === email ? 'Email en uso' : 'Username en uso'
-                );
+                let message = 'El usuario ya existe';
+                let details = '';
+                
+                if (existingUser.email === email && existingUser.username === username) {
+                    message = 'Tanto el email como el username ya están registrados';
+                    details = 'Email y username en uso';
+                } else if (existingUser.email === email) {
+                    message = 'Este email ya está registrado';
+                    details = 'Email en uso';
+                } else if (existingUser.username === username) {
+                    message = 'Este nombre de usuario ya está registrado';
+                    details = 'Username en uso';
+                }
+                
+                throw new CustomError(message, 409, details);
             }
     
             // Get all active profile images
@@ -52,6 +62,23 @@ const userController = {
     
             const hashedPassword = await hashPassword(password);
             
+            // Obtener el rango por defecto (menor XP)
+            const Rank = require('../database/Models/ranksModel');
+            let defaultRank = await Rank.findOne({ requiredXP: 0 });
+            
+            // Si no existe un rango con XP = 0, buscar el de menor XP
+            if (!defaultRank) {
+                defaultRank = await Rank.findOne().sort({ requiredXP: 1 });
+            }
+            
+            if (!defaultRank) {
+                throw new CustomError(
+                    'Error de configuración',
+                    500,
+                    'No se encontró ningún rango en el sistema'
+                );
+            }
+            
             const newUser = await User.create({
                 fullName,
                 username,
@@ -59,6 +86,7 @@ const userController = {
                 password: hashedPassword,
                 role: !role ? 'user' : role,
                 perfilImage: selectedImage._id,
+                rank: defaultRank._id,
                 verified: false // Agregamos el campo verified
             });
     
@@ -98,6 +126,14 @@ const userController = {
                 user: populatedUser 
             });
         } catch (error) {
+            // Si es un error de validación de Mongoose, proporcionar más detalles
+            if (error.name === 'ValidationError') {
+                const details = Object.keys(error.errors).map(key => ({
+                    field: key,
+                    message: error.errors[key].message
+                }));
+                throw new CustomError('Error de validación', 400, details);
+            }
             next(error);
         }
     },
@@ -156,9 +192,17 @@ const userController = {
             const userResponse = user.toObject();
             delete userResponse.password;
 
+            // Generar token JWT para el usuario
+            const token = jwt.sign(
+                { userId: user._id },
+                process.env.JWT_SECRET || 'tu-secreto-jwt',
+                { expiresIn: '7d' } // Token válido por 7 días
+            );
+
             res.status(200).json({ 
                 message: 'Inicio de sesión exitoso',
-                user: userResponse 
+                user: userResponse,
+                token: token  // Incluir el token en la respuesta
             });
         } catch (error) {
             next(error);

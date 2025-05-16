@@ -27,4 +27,7 @@ router.put('/:id/set-skins', unrankedsController.setSkinsForUnranked);
 router.put('/:id/add-skins', unrankedsController.addSkinsToUnranked);
 router.put('/:id/remove-skins', unrankedsController.removeSkinsFromUnranked);
 
+// Ruta para gestionar stock
+router.put('/:id/update-stock', unrankedsController.updateStockUnranked);
+
 module.exports = router;

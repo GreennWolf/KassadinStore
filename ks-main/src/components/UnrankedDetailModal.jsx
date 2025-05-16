@@ -92,6 +92,11 @@ const UnrankedDetailModal = ({
               <DialogTitle className="text-xl font-bold">Cuenta Unrankd</DialogTitle>
               <DialogDescription className="flex items-center gap-2 mt-1">
                 <Badge className="bg-primary/80">{account.region}</Badge>
+                {account.stock !== undefined && (
+                  <Badge className={`${account.stock > 0 ? 'bg-green-600' : 'bg-red-600'} text-white`}>
+                    {account.stock > 0 ? `Stock: ${account.stock}` : 'Sin stock'}
+                  </Badge>
+                )}
               </DialogDescription>
             </div>
             
@@ -111,9 +116,10 @@ const UnrankedDetailModal = ({
               <Button 
                 className="bg-primary hover:bg-primary/90 text-primary-foreground flex items-center gap-2"
                 onClick={handleAddToCart}
+                disabled={account.stock === 0}
               >
                 <ShoppingCart className="h-4 w-4" />
-                Agregar al carrito
+                {account.stock > 0 ? 'Agregar al carrito' : 'Sin stock'}
               </Button>
             </div>
           </div>
@@ -170,6 +176,11 @@ const UnrankedDetailModal = ({
               
               <div className="font-semibold">Subida a mano:</div>
               <div>{account.handUpgrade ? "Sí" : "No"}</div>
+              
+              <div className="font-semibold">Stock disponible:</div>
+              <div className={account.stock === 0 ? 'text-red-500 font-bold' : ''}>
+                {account.stock || 0}
+              </div>
             </div>
           </div>
         </div>

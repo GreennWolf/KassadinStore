@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { Eye, EyeOff } from "lucide-react";
 
 export const UserModal = ({ isOpen, onClose, user, onSubmit, mode }) => {
     const [formData, setFormData] = useState({
@@ -13,6 +14,7 @@ export const UserModal = ({ isOpen, onClose, user, onSubmit, mode }) => {
         password: '',
         role: 'user',
     });
+    const [showPassword, setShowPassword] = useState(false);
 
     const roles = [
         { value: 'user', label: 'Usuario' },
@@ -88,13 +90,24 @@ export const UserModal = ({ isOpen, onClose, user, onSubmit, mode }) => {
                     {mode === 'create' && (
                         <div className="space-y-2">
                             <Label htmlFor="password">Contraseña</Label>
-                            <Input
-                                id="password"
-                                type="password"
-                                value={formData.password}
-                                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                                required
-                            />
+                            <div className="relative">
+                                <Input
+                                    id="password"
+                                    type={showPassword ? "text" : "password"}
+                                    value={formData.password}
+                                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                                    required
+                                    className="pr-10"
+                                />
+                                <button
+                                    type="button"
+                                    className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-500 hover:text-gray-700"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    tabIndex="-1"
+                                >
+                                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                </button>
+                            </div>
                         </div>
                     )}
 

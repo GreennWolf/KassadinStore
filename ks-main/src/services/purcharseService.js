@@ -103,51 +103,127 @@ const compressImage = async (file) => {
 
 // Crear una nueva compra
 export const createPurchase = async (data) => {
+    console.log('PURCHASESERVICE - Iniciando createPurchase');
     const userId = getUserId();
-    const {items, paymentMethodId, riotName, discordName, region, selectedCurrency, cupon, file} = data;
+    console.log('PURCHASESERVICE - ID del usuario:', userId);
+    
+    const {items, paymentMethodId, riotName, discordName, region, selectedCurrency, cupon, file, orderId, orderType} = data;
+    console.log('PURCHASESERVICE - Items recibidos:', items ? items.length : 0, 'items');
+    
+    // Verificar si hay unrankeds en los items SOLO si hay items
+    let unrankedItems = [];
+    if (items && Array.isArray(items)) {
+        unrankedItems = items.filter(item => item.isUnranked === true || item.itemType === 'Unranked');
+        console.log('PURCHASESERVICE - Items unranked encontrados:', unrankedItems.length);
+        if (unrankedItems.length > 0) {
+            console.log('PURCHASESERVICE - Detalles de items unranked:', JSON.stringify(unrankedItems));
+        }
+    }
 
     if (!userId) {
+        console.error('PURCHASESERVICE - Error: Usuario no autenticado');
         throw new Error('Usuario no autenticado.');
     }
 
+    console.log('PURCHASESERVICE - Creando FormData');
     const formData = new FormData();
     formData.append('userId', userId);
-    formData.append('items', JSON.stringify(items));
+    
+    // Si es una orden normal, añadir items
+    if (!orderType || orderType !== 'eloboost') {
+        console.log('PURCHASESERVICE - Agregando items al FormData');
+        formData.append('items', JSON.stringify(items));
+    }
+    
+    // Si es una orden de tipo eloboost, añadir orderId
+    if (orderType === 'eloboost' && orderId) {
+        console.log('PURCHASESERVICE - Orden tipo eloboost detectada');
+        formData.append('orderId', orderId);
+        formData.append('orderType', orderType);
+    }
+    
     formData.append('paymentMethodId', paymentMethodId);
     formData.append('riotName', riotName);
     formData.append('discordName', discordName);
     formData.append('region', region);
     formData.append('selectedCurrency', selectedCurrency);
     formData.append('cuponId', cupon);
+    console.log('PURCHASESERVICE - FormData creado con éxito');
 
     // Comprimir la imagen si es una imagen
     if (file) {
+        console.log('PURCHASESERVICE - Procesando archivo de recibo');
         const fileType = file.type.split('/')[0];
         if (fileType === 'image') {
             try {
+                console.log('PURCHASESERVICE - Comprimiendo imagen');
                 const optimizedFile = await compressImage(file);
                 formData.append('receipt', optimizedFile);
+                console.log('PURCHASESERVICE - Imagen comprimida con éxito');
             } catch (error) {
-                console.error('Error comprimiendo imagen:', error);
+                console.error('PURCHASESERVICE - Error comprimiendo imagen:', error);
                 formData.append('receipt', file); // Si falla la compresión, usar archivo original
             }
         } else {
+            console.log('PURCHASESERVICE - Agregando archivo sin comprimir');
             formData.append('receipt', file); // Si no es imagen, usar archivo original
         }
     }
 
     try {
+        console.log('PURCHASESERVICE - Enviando solicitud al servidor');
+        console.log('PURCHASESERVICE - URL:', `${import.meta.env.VITE_API_URL}/api/purchases/create`);
+        
         const response = await api.post('/purchases/create', formData, {
             headers: {
                 'Content-Type': 'multipart/form-data',
             },
             withCredentials: true, // Importante para CORS
         });
-        await getUpdatedUser(userId,true);
-        // console.log(response.data);
-        fbq('track', 'Purchase', { value: response.data.Total, currency: response.data.currencyId , content_ids: response.data.items.map(item => item.name || item.itemId), content_type: 'product' });
+        
+        console.log('PURCHASESERVICE - Respuesta recibida del servidor:', response.status);
+        console.log('PURCHASESERVICE - ID de la compra creada:', response.data._id);
+        
+        // Si hay unranked items, mostrar detalles de la respuesta
+        if (unrankedItems.length > 0) {
+            console.log('PURCHASESERVICE - Items en la respuesta:', response.data.items ? response.data.items.length : 0);
+            console.log('PURCHASESERVICE - Estado de la compra:', response.data.status?.statusId);
+        }
+        
+        console.log('PURCHASESERVICE - Actualizando usuario');
+        await getUpdatedUser(userId, true);
+        
+        // Tracking de evento de compra
+        if (typeof fbq === 'function') {
+            console.log('PURCHASESERVICE - Registrando evento de Facebook Pixel');
+            fbq('track', 'Purchase', { 
+                value: response.data.Total, 
+                currency: response.data.currencyId,
+                content_ids: response.data.items ? response.data.items.map(item => item.name || item.itemId) : [orderId], 
+                content_type: 'product' 
+            });
+        }
+        
+        // Si es una orden de tipo eloboost, vincular el pago con la orden
+        if (orderType === 'eloboost' && orderId && response.data._id) {
+            try {
+                console.log("PURCHASESERVICE - Intentando vincular EloBoost orden:", orderId, "con pago:", response.data._id);
+                await axios.post(`${import.meta.env.VITE_API_URL}/api/eloboost/orders/link-payment`, {
+                    orderId: orderId,
+                    paymentId: response.data._id,
+                    userId: userId
+                });
+            } catch (linkError) {
+                console.error('PURCHASESERVICE - Error al vincular pago con orden de EloBoost:', linkError);
+                // No lanzamos error para permitir que la compra se complete
+            }
+        }
+        
+        console.log('PURCHASESERVICE - Compra creada exitosamente');
         return transformPurchaseData(response.data);
     } catch (error) {
+        console.error('PURCHASESERVICE - Error creando compra:', error);
+        console.error('PURCHASESERVICE - Detalles del error:', error.response?.data);
         handleRequestError(error);
     }
 };
@@ -175,6 +251,10 @@ export const getPurchaseById = async (id) => {
 // Actualizar una compra existente
 export const updatePurchase = async (id, updates) => {
     try {
+        console.log('=== INICIANDO UPDATEPURCHASE EN SERVICIO ===');
+        console.log('ID de la orden:', id);
+        console.log('Actualizaciones:', JSON.stringify(updates));
+        
         if (updates.items) {
             updates.items = updates.items.map(item => ({
                 ...item,
@@ -182,9 +262,23 @@ export const updatePurchase = async (id, updates) => {
             }));
         }
 
+        console.log('Enviando solicitud PUT a:', `/purchases/edit/${id}`);
+        console.log('Cuerpo de la solicitud:', JSON.stringify(updates));
+        
         const response = await api.put(`/purchases/edit/${id}`, updates);
+        console.log('Respuesta del servidor:', JSON.stringify({
+            status: response.status,
+            statusText: response.statusText,
+            data: response.data ? 'Datos recibidos' : 'Sin datos',
+        }));
+        
+        console.log('=== FIN UPDATEPURCHASE EN SERVICIO ===');
         return transformPurchaseData(response.data);
     } catch (error) {
+        console.error('Error en updatePurchase:', error);
+        console.error('Detalles del error:', error.message);
+        console.error('Stack trace:', error.stack);
+        console.error('Respuesta del servidor:', error.response?.data);
         handleRequestError(error);
     }
 };

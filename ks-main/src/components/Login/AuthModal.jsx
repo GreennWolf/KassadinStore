@@ -3,6 +3,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Eye, EyeOff } from "lucide-react";
 import { loginUser, registerUser, forgotPassword } from '../../services/userService';
 import { toast } from 'react-toastify';
 
@@ -19,6 +20,8 @@ export function AuthModal({ isOpen, onClose }) {
   const [error, setError] = useState(null);
   const [showVerificationMessage, setShowVerificationMessage] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const resetForm = () => {
     setFormData({
@@ -46,10 +49,21 @@ export function AuthModal({ isOpen, onClose }) {
         password: formData.password
       });
 
+      // Guardar el usuario en localStorage
       localStorage.setItem('user', JSON.stringify(user.data));
+      
+      // Guardar el token por separado para acceso directo
+      if (user.token) {
+        console.log('Guardando token:', user.token);
+        localStorage.setItem('token', user.token);
+      } else {
+        console.warn('No se encontró token en la respuesta del servidor');
+      }
+      
       resetForm();
       onClose();
     } catch (err) {
+      console.error('Error de login completo:', err);
       if (err.message === 'Por favor verifica tu correo electrónico antes de iniciar sesión') {
         setShowVerificationMessage(true);
       } else {
@@ -83,7 +97,20 @@ export function AuthModal({ isOpen, onClose }) {
       setShowVerificationMessage(true);
       resetForm();
     } catch (err) {
-      setError('Error al registrar. Intente con otro email o username.');
+      // Mejorar el manejo de errores
+      if (err.response && err.response.status === 409) {
+        // Error de conflicto - usuario ya existe
+        if (err.response.data && err.response.data.message) {
+          setError(err.response.data.message);
+        } else {
+          setError('El email o nombre de usuario ya está registrado.');
+        }
+      } else if (err.response && err.response.data && err.response.data.message) {
+        setError(err.response.data.message);
+      } else {
+        setError('Error al registrar. Por favor intente nuevamente.');
+      }
+      console.error('Error al registrar:', err);
     } finally {
       setLoading(false);
     }
@@ -123,13 +150,24 @@ export function AuthModal({ isOpen, onClose }) {
       </div>
       <div className="space-y-2">
         <Label htmlFor="password">Contraseña</Label>
-        <Input
-          id="password"
-          type="password"
-          value={formData.password}
-          onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-          required
-        />
+        <div className="relative">
+          <Input
+            id="password"
+            type={showPassword ? "text" : "password"}
+            value={formData.password}
+            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+            required
+            className="pr-10"
+          />
+          <button
+            type="button"
+            className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-500 hover:text-gray-700"
+            onClick={() => setShowPassword(!showPassword)}
+            tabIndex="-1"
+          >
+            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+          </button>
+        </div>
         <button
           type="button"
           className="text-sm text-primary hover:underline mb-5"
@@ -178,23 +216,45 @@ export function AuthModal({ isOpen, onClose }) {
       </div>
       <div className="space-y-2">
         <Label htmlFor="password">Contraseña</Label>
-        <Input 
-          id="password"
-          type="password"
-          value={formData.password}
-          onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-          required
-        />  
+        <div className="relative">
+          <Input 
+            id="password"
+            type={showPassword ? "text" : "password"}
+            value={formData.password}
+            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+            required
+            className="pr-10"
+          />  
+          <button
+            type="button"
+            className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-500 hover:text-gray-700"
+            onClick={() => setShowPassword(!showPassword)}
+            tabIndex="-1"
+          >
+            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+          </button>
+        </div>
       </div>
       <div className="space-y-2">
         <Label htmlFor="confirmPassword">Confirmar Contraseña</Label>
-        <Input
-          id="confirmPassword" 
-          type="password"
-          value={formData.confirmPassword}
-          onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-          required
-        />
+        <div className="relative">
+          <Input
+            id="confirmPassword" 
+            type={showConfirmPassword ? "text" : "password"}
+            value={formData.confirmPassword}
+            onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+            required
+            className="pr-10"
+          />
+          <button
+            type="button"
+            className="absolute inset-y-0 right-0 flex items-center px-3 text-gray-500 hover:text-gray-700"
+            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+            tabIndex="-1"
+          >
+            {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+          </button>
+        </div>
       </div>
     </>
   );

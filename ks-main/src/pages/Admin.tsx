@@ -9,6 +9,7 @@ import AdminProducts from '@/components/admin/AdminProducts';
 import { AdminRank } from '@/components/admin/AdminRank';
 import { AdminRecompensas } from '@/components/admin/AdminRecompensas';
 import { AdminPedidos } from '@/components/admin/AdminPedidos';
+import EloBoostManager from '@/components/admin/adminEloBoost/EloBoostManager';
 import { useEffect, useState } from "react";
 import { toast, ToastContainer } from 'react-toastify';
 
@@ -55,6 +56,7 @@ const Admin = () => {
               <TabsTrigger value="prices">Precios</TabsTrigger>
               <TabsTrigger value="ranks">Rangos</TabsTrigger>
               <TabsTrigger value="recompensas">Recompensas</TabsTrigger>
+              <TabsTrigger value="eloboost">Elo Boost</TabsTrigger>
             </TabsList>
   
             <TabsContent value="overview">
@@ -133,6 +135,18 @@ const Admin = () => {
                 </CardHeader>
                 <CardContent>
                   <AdminRecompensas/>
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            <TabsContent value="eloboost">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Gestión de Elo Boost</CardTitle>
+                  <CardDescription>Administra rangos, precios y órdenes de Elo Boost</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <EloBoostManager />
                 </CardContent>
               </Card>
             </TabsContent>

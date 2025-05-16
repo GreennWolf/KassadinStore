@@ -12,7 +12,7 @@ export default function Eloboost() {
               League of Legends Boosting
             </h1>
             <p className="mx-auto max-w-[700px] text-muted-foreground md:text-xl">
-              Professional and reliable LoL boosting service. Reach your desired rank with our experienced boosters.
+              Servicio profesional y confiable de Elo Boost para League of Legends. Alcanza tu rango deseado con nuestros experimentados boosters.
             </p>
           </div>
           <RankBoostPanel />

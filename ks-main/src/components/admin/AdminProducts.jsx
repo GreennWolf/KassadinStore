@@ -396,6 +396,7 @@ export const AdminProducts = ({isUpdating, setIsUpdating}) => {
                   <>
                     <TableHead>Región</TableHead>
                     <TableHead>Nivel</TableHead>
+                    <TableHead>Stock</TableHead>
                     <TableHead>Esencia Azul</TableHead>
                     <TableHead>Esencia Naranja</TableHead>
                     <TableHead>Skins</TableHead>
@@ -440,6 +441,11 @@ export const AdminProducts = ({isUpdating, setIsUpdating}) => {
                     <>
                       <TableCell>{product.region}</TableCell>
                       <TableCell>{product.nivel}</TableCell>
+                      <TableCell>
+                        <span className={product.stock === 0 ? 'text-red-500 font-bold' : ''}>
+                          {product.stock || 0}
+                        </span>
+                      </TableCell>
                       <TableCell>{product.escencia}</TableCell>
                       <TableCell>{product.escenciaNaranja}</TableCell>
                       <TableCell>

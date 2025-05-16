@@ -159,6 +159,9 @@ export const TopNav = () => {
             <Link to="/unrankeds" className="text-muted-foreground hover:text-foreground">
               Unrankeds
             </Link>
+            <Link to="/eloboost" className="text-muted-foreground hover:text-foreground">
+              Elo Boost
+            </Link>
           </div>
 
           <Link to="/" className="absolute left-1/2 transform -translate-x-1/2 hidden lg:block">
@@ -341,6 +344,9 @@ export const TopNav = () => {
             </Link>
             <Link to="/unrankeds" className="block text-muted-foreground hover:text-foreground py-2">
               Unrankeds
+            </Link>
+            <Link to="/eloboost" className="block text-muted-foreground hover:text-foreground py-2">
+              Elo Boost
             </Link>
           </div>
         )}
