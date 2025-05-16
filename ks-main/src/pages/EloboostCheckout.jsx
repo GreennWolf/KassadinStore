@@ -805,8 +805,7 @@ export default function EloboostCheckout() {
                     <div className="flex justify-between">
                       <Button type="button" variant="outline" onClick={handleBack}>Atrás</Button>
                       <Button 
-                        type="submit" 
-                        onClick={() => // console.log("Botón Continuar a la confirmación clickeado")}
+                        type="submit"
                       >
                         Continuar a la confirmación
                       </Button>
@@ -1045,7 +1044,6 @@ export default function EloboostCheckout() {
                       <Button 
                         type="submit" 
                         disabled={!receiptFile || isSubmitting}
-                        onClick={() => // console.log("Botón Completar Compra clickeado")}
                       >
                         {isSubmitting ? "Procesando..." : "Completar Compra"}
                       </Button>

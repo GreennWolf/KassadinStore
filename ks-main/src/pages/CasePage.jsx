@@ -1201,7 +1201,6 @@ const CasePage = () => {
                             src={skinImage}
                             alt={`${displayName}`}
                             className="max-w-full max-h-40 object-contain"
-                            onLoad={() => // console.log("Imagen de skin cargada correctamente")}
                             onError={(e) => {
                               console.error("Error al cargar imagen de skin, usando fallback");
                               e.target.src = skinFragmentImage;
